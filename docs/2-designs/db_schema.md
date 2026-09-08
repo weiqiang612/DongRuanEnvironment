@@ -30,6 +30,8 @@
 
 `gm_id` 统一为与 `grid_member.gm_id` 一致的 `VARCHAR(11)`。为公众历史查询和管理员超时查询建立 `tel_id + submitted_at`、`state + timeout_flag + assigned_at` 索引。
 
+当前 Java 映射中，`af_date`、`af_time` 与 `assign_date`、`assign_time` 保持字符串以兼容既有接口；`submitted_at`、`assigned_at`、`completed_at`、`updated_at`、`timeout_at` 映射为 `LocalDateTime`，`gm_id` 映射为 `String`，`state` 映射为 `Integer`，`timeout_flag` 映射为 `Boolean`。这些字段由服务层和数据库默认值维护，不作为反馈保存/更新请求的可写字段。
+
 ## 逻辑外键策略
 
 本项目不使用 MySQL `FOREIGN KEY` 物理约束，所有跨表关联均采用逻辑外键：保留语义明确的关联字段和查询索引，由服务层在新增、修改和删除前校验关联对象是否存在，并显式处理删除限制或历史留痕。数据库不使用级联删除或更新。

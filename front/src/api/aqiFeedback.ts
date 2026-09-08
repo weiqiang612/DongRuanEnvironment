@@ -5,18 +5,10 @@ const request = axios.create({
   timeout: 5000,
 })
 
-export function getAqiFeedbackList() {
-  return request({
-    url: 'aqiFeedback/list',
-    method: 'get',
-  })
-}
-
-export function deleteByAfid(afId: number) {
-  return request({
-    url: `aqiFeedback/delete/${afId}`,
-    method: 'get',
-  })
+export interface ResultVO<T> {
+  code: number
+  message: string
+  data: T
 }
 
 export interface AqiFeedbackPayload {
@@ -29,7 +21,28 @@ export interface AqiFeedbackPayload {
   estimatedGrade: number | null
   afDate: string
   afTime: string
-  state?: number | null
+}
+
+export interface AqiFeedbackRow extends AqiFeedbackPayload {
+  afId: number
+  provinceName?: string
+  cityName?: string
+  state?: number
+  timeoutFlag?: boolean
+}
+
+export function getAqiFeedbackList() {
+  return request({
+    url: 'aqiFeedback/list',
+    method: 'get',
+  }) as Promise<{ data: ResultVO<AqiFeedbackRow[]> }>
+}
+
+export function deleteByAfid(afId: number) {
+  return request({
+    url: `aqiFeedback/delete/${afId}`,
+    method: 'get',
+  }) as Promise<{ data: ResultVO<boolean> }>
 }
 
 export function saveAqiFeedback(data: AqiFeedbackPayload) {
@@ -37,7 +50,7 @@ export function saveAqiFeedback(data: AqiFeedbackPayload) {
     url: 'aqiFeedback/save',
     method: 'post',
     data,
-  })
+  }) as Promise<{ data: ResultVO<boolean> }>
 }
 
 export function updateAqiFeedback(data: AqiFeedbackPayload) {
@@ -45,5 +58,5 @@ export function updateAqiFeedback(data: AqiFeedbackPayload) {
     url: 'aqiFeedback/update',
     method: 'post',
     data,
-  })
+  }) as Promise<{ data: ResultVO<boolean> }>
 }

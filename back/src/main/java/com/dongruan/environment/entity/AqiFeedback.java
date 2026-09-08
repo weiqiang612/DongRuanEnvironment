@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * <p>
@@ -18,6 +20,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@ToString
 @TableName("aqi_feedback")
 public class AqiFeedback implements Serializable {
 
@@ -72,7 +75,7 @@ public class AqiFeedback implements Serializable {
     /**
      * 指派网格员编号
      */
-    private Integer gmId;
+    private String gmId;
 
     /**
      * 指派日期
@@ -93,6 +96,18 @@ public class AqiFeedback implements Serializable {
      * 备注
      */
     private String remarks;
+
+    private LocalDateTime submittedAt;
+
+    private LocalDateTime assignedAt;
+
+    private LocalDateTime completedAt;
+
+    private LocalDateTime updatedAt;
+
+    private Boolean timeoutFlag;
+
+    private LocalDateTime timeoutAt;
 
     @TableField(exist = false)
     private String provinceName;

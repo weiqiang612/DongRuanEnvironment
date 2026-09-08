@@ -1,6 +1,6 @@
 # TASK-003: 前后端代码基线重构
 
-**Status**: Draft
+**Status**: Complete (浏览器验收由用户明确暂缓)
 **Created**: 2026-09-08
 **Feature dir**: `docs/4-tasks/features/TASK-003-baseline-code-refactor/`
 
@@ -36,28 +36,28 @@
     "category": "functional",
     "description": "现有反馈和地区接口保留原有路径、HTTP 方法和既有 JSON 字段，并在输入无效时返回一致、可理解的校验错误。",
     "steps": ["核对反馈和地区接口的方法、路径及 ResultVO 外层结构。", "使用缺失或非法的反馈请求字段调用接口。", "验证请求被安全拒绝，且不泄露内部实现。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-002",
     "category": "integration",
     "description": "反馈实体、DTO、服务和数据访问实现与 db_schema.md 的现有字段类型和逻辑外键策略一致，且不执行新的数据库迁移。",
     "steps": ["核对 gmId、规范时间、状态和超时字段的 Java 类型与数据库设计。", "核对省市查询已离开控制器的数据访问职责。", "验证迁移目录和实际数据库结构未因本任务改变。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-003",
     "category": "security",
     "description": "生产源码不再包含测试接口、代码生成器、硬编码数据库连接信息、调试输出或废弃注释。",
     "steps": ["搜索测试控制器、代码生成器和连接凭据模式。", "检查 Maven 依赖与生产源码。", "验证不再存在对应生产代码或凭据。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-004",
     "category": "edge-case",
     "description": "首页和反馈维护页不依赖 Vite 默认脚手架，且前端请求错误能够被页面理解性地反馈。",
     "steps": ["访问 / 并验证跳转到 /aqiFeedback。", "确认默认欢迎页、About 页、示例组件和计数器 Store 无路由或导入引用。", "模拟或检查失败请求的错误反馈路径。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-UI-UX",
@@ -92,3 +92,7 @@
 ### Explicit non-maintenance
 
 - `docs/1-requirements/`、`docs/2-designs/architecture.md`、`docs/3-constraints/` 和运行脚本不维护，因为业务范围、架构边界、约束和运行方式均不改变。
+
+### Verification exception
+
+- 用户于 2026-09-08 明确要求不执行 T9 浏览器桌面、移动端、悬停和控制台验收；因此 `AC-UI-UX` 保持未验证状态，但不再阻塞本任务收尾。

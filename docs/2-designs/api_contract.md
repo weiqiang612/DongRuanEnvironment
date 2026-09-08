@@ -14,7 +14,9 @@
 | GET | `/region/provinces` | 查询省选项 |
 | GET | `/region/cities?provinceId={id}` | 查询市选项 |
 
-`AqiFeedback` 请求体使用驼峰字段，例如 `telId`、`provinceId`、`cityId`、`estimatedGrade`、`afDate`、`afTime`。改变路径、方法、字段或响应结构前，更新本文件并确认前端调用同步修改。
+反馈保存和更新请求保持驼峰字段兼容：`afId`（仅更新必填）、`telId`、`provinceId`、`cityId`、`address`、`information`、`estimatedGrade`、`afDate`、`afTime`。`state`、指派字段、规范时间和超时字段由服务端维护，反馈表单不得传入或修改。
+
+所有当前接口继续返回 `ResultVO` 外层：`code`、`message`、`data`。请求字段缺失、格式错误或 `estimatedGrade` 不在 0 至 6 时，返回 HTTP 400 与 `code: 400`，`data` 为字段错误信息；不存在的反馈返回 HTTP 404 与 `code: 404`，不暴露异常堆栈或数据库细节。`provinceId` 缺失时，`/region/cities` 同样按该规则拒绝。
 
 ## 目标契约原则
 

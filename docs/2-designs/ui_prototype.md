@@ -21,9 +21,8 @@
 
 ## 当前页面
 
-- `HomeView.vue`：应用首页。
-- `AqiFeedBackList.vue`：反馈列表、增删改及省市选择。
-- `AboutView.vue`：示例说明页。
+- `/`：重定向至 `/aqiFeedback`，不保留 Vite 默认欢迎页。
+- `/aqiFeedback`：当前唯一业务页，提供反馈列表、增删改及省市选择；使用经典政务业务系统布局、状态语义和理解性错误提示。
 
 ## 目标页面范围
 
