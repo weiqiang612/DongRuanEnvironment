@@ -2,7 +2,7 @@
 
 ## 当前实现架构
 
-- `back/demo`：Spring Boot REST API，端口 `8080`。
+- `back`：Spring Boot REST API，端口 `8080`。
 - `front`：Vue 3 单页应用；开发期将 `/api` 代理到后端。
 - MySQL：由 Spring `JdbcTemplate` 和 MyBatis-Plus 访问。
 

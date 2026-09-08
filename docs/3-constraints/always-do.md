@@ -8,7 +8,7 @@
 
 ## Quality
 
-- ✅ 后端改动完成前运行 `cd back/demo && ./mvnw test`。
+- ✅ 后端改动完成前运行 `cd back && ./mvnw test`。
 - ✅ 前端改动完成前运行 `cd front && npm run build` 与 `npm run lint`。
 - ✅ 前端遵守两空格、单引号、无分号、100 字符行宽的现有格式化规则。
 - ✅ 完成后更新任务 `tasks.md` 与 `CURRENT_PLAN.md`，并记录实际验证结果。

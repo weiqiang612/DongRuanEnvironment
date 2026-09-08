@@ -12,7 +12,7 @@
 
 ## Commands
 
-- **Backend build/test**: `cd back/demo && ./mvnw test`
+- **Backend build/test**: `cd back && ./mvnw test`
 - **Frontend build**: `cd front && npm run build`
 - **Frontend lint**: `cd front && npm run lint`
 - **Frontend dev server**: `cd front && npm run dev`
@@ -31,11 +31,11 @@ The frontend proxies `/api` to `http://localhost:8080`; run the backend before t
 ## Workflow
 
 1. Read `CURRENT_PLAN.md` and the active task specification.
-2. Read the relevant module guide: `back/demo/AGENTS.md` or `front/AGENTS.md`.
+2. Read the relevant module guide: `back/AGENTS.md` or `front/AGENTS.md`.
 3. Keep API and schema contracts in `docs/2-designs/` synchronized with implementation.
 4. Run the focused backend or frontend checks before declaring work complete.
 
 ## Modules
 
-- `back/demo/`: Spring Boot API on port 8080.
+- `back/`: Spring Boot API on port 8080.
 - `front/`: Vue single-page application, served by Vite.

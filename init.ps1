@@ -12,8 +12,8 @@ if (-not (Test-Path -LiteralPath $LogDir)) {
   New-Item -ItemType Directory -Path $LogDir | Out-Null
 }
 
-$MavenWrapper = Join-Path (Join-Path $PSScriptRoot 'back') 'demo\mvnw.cmd'
-$Process = Start-Process -FilePath $MavenWrapper -ArgumentList 'spring-boot:run' -WorkingDirectory (Join-Path $PSScriptRoot 'back\demo') -RedirectStandardOutput (Join-Path $PSScriptRoot $StdoutLog) -RedirectStandardError (Join-Path $PSScriptRoot $StderrLog) -PassThru
+$MavenWrapper = Join-Path $PSScriptRoot 'back\mvnw.cmd'
+$Process = Start-Process -FilePath $MavenWrapper -ArgumentList 'spring-boot:run' -WorkingDirectory (Join-Path $PSScriptRoot 'back') -RedirectStandardOutput (Join-Path $PSScriptRoot $StdoutLog) -RedirectStandardError (Join-Path $PSScriptRoot $StderrLog) -PassThru
 Write-Host "[init] Backend started (PID $($Process.Id), logs -> $StdoutLog)"
 
 for ($attempt = 0; $attempt -lt 60; $attempt++) {

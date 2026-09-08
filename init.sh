@@ -16,8 +16,8 @@ if ! command -v curl >/dev/null 2>&1; then
 fi
 
 mkdir -p "$LOG_DIR"
-cd back/demo
-nohup ./mvnw spring-boot:run > "../../$LOG_FILE" 2>&1 &
+cd back
+nohup ./mvnw spring-boot:run > "../$LOG_FILE" 2>&1 &
 echo "[init] Backend started (PID $!, logs -> $LOG_FILE)"
 
 for _ in $(seq 1 60); do
