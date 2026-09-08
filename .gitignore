@@ -1,0 +1,5 @@
+# Local IDE settings
+back/.idea/
+
+# Local runtime configuration (use application.example.yaml as a template)
+back/demo/src/main/resources/application.yaml
