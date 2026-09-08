@@ -20,7 +20,7 @@ public class SpringDocConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("东软环境监测系统 API")
-                        .description("老子的 API")
+                        .description("API")
                         .version("1.0.0"));
     }
 }

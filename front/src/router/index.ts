@@ -4,7 +4,13 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/aqiFeedback',
+      name: 'systemEntry',
+      component: () => import('../views/SystemEntry.vue'),
+    },
+    {
+      path: '/neps/login',
+      name: 'nepsLogin',
+      component: () => import('../views/NepsLogin.vue'),
     },
     {
       path: '/aqiFeedback',

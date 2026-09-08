@@ -6,7 +6,7 @@
 
 | 现有表 | 保留策略 | 说明 |
 |---|---|---|
-| `supervisor` | 保留 | 公众监督员身份来源，`tel_id` 是反馈归属标识；本次不新增 `public_user`。 |
+| `supervisor` | 扩展 | 公众监督员身份来源，`tel_id` 是反馈归属标识；`password` 扩容为 PBKDF2 哈希存储，本次不新增 `public_user`。 |
 | `grid_province`、`grid_city`、`grid_member` | 保留 | 当前网格与网格员基础数据；不新增 `grid_region`。 |
 | `aqi` | 保留 | 保存 AQI 六级、颜色及污染物范围；计算实现前需明确相邻等级边界。 |
 | `aqi_feedback` | 扩展 | 同时承担公众反馈和任务主状态，不新增 `inspection_task`。 |
@@ -31,6 +31,10 @@
 `gm_id` 统一为与 `grid_member.gm_id` 一致的 `VARCHAR(11)`。为公众历史查询和管理员超时查询建立 `tel_id + submitted_at`、`state + timeout_flag + assigned_at` 索引。
 
 当前 Java 映射中，`af_date`、`af_time` 与 `assign_date`、`assign_time` 保持字符串以兼容既有接口；`submitted_at`、`assigned_at`、`completed_at`、`updated_at`、`timeout_at` 映射为 `LocalDateTime`，`gm_id` 映射为 `String`，`state` 映射为 `Integer`，`timeout_flag` 映射为 `Boolean`。这些字段由服务层和数据库默认值维护，不作为反馈保存/更新请求的可写字段。
+
+## 公众监督员登录
+
+`supervisor.tel_id` 是 NEPS 手机号登录标识。迁移将历史 `password VARCHAR(20)` 扩容为 `VARCHAR(256)`，用于存储 PBKDF2 格式的密码哈希；不新增明文密码列。为兼容历史账号，认证服务仅在首次成功验证历史值时将其立即原位改写为 PBKDF2 哈希；后续登录仅比较哈希。密码、哈希均不得在接口响应、日志或前端状态中出现。
 
 ## 逻辑外键策略
 

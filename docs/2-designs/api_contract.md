@@ -13,10 +13,17 @@
 | POST | `/aqiFeedback/update` | 更新反馈 |
 | GET | `/region/provinces` | 查询省选项 |
 | GET | `/region/cities?provinceId={id}` | 查询市选项 |
+| POST | `/auth/neps/login` | 公众监督员登录 |
 
 反馈保存和更新请求保持驼峰字段兼容：`afId`（仅更新必填）、`telId`、`provinceId`、`cityId`、`address`、`information`、`estimatedGrade`、`afDate`、`afTime`。`state`、指派字段、规范时间和超时字段由服务端维护，反馈表单不得传入或修改。
 
 所有当前接口继续返回 `ResultVO` 外层：`code`、`message`、`data`。请求字段缺失、格式错误或 `estimatedGrade` 不在 0 至 6 时，返回 HTTP 400 与 `code: 400`，`data` 为字段错误信息；不存在的反馈返回 HTTP 404 与 `code: 404`，不暴露异常堆栈或数据库细节。`provinceId` 缺失时，`/region/cities` 同样按该规则拒绝。
+
+### NEPS 登录 MVP
+
+`POST /auth/neps/login` 请求体为 `{ "telId": "13800000000", "password": "用户输入密码" }`。两项均为必填字符串，前端只通过 HTTPS 或本地开发代理提交，绝不保存密码。
+
+成功时返回 HTTP 200、`code: 200`，`data` 仅含 `telId`、`realName`；服务端创建 HTTP Session，密码与密码哈希不出现在响应中。缺失字段返回 HTTP 400、`code: 400` 和字段错误；手机号不存在或密码错误统一返回 HTTP 401、`code: 401`、`message: "手机号或密码错误"`，`data` 为 `null`。登录接口不提供注册、找回密码、令牌或其他角色认证。
 
 ## 目标契约原则
 
