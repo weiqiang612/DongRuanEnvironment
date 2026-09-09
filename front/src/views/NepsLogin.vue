@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { loginNeps } from '@/api/nepsAuth'
 import type { ResultVO } from '@/api/aqiFeedback'
 import logo from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_09 PM (1).png'
-import brandLogo from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_09 PM (2).png'
 import background from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_10 PM (3).png'
 
 const router = useRouter()
