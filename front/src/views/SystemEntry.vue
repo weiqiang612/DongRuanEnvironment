@@ -12,7 +12,7 @@ interface SystemCard {
   title: string
   description: string
   icon: 'public' | 'grid' | 'admin' | 'screen'
-  available: boolean
+  loginPath: string
 }
 
 const systems: SystemCard[] = [
@@ -21,37 +21,34 @@ const systems: SystemCard[] = [
     title: '公众监督员端',
     description: '面向社会公众，提供环境问题反馈上报和办理进度查询等功能。',
     icon: 'public',
-    available: true,
+    loginPath: '/neps/login',
   },
   {
     code: 'NEPG',
     title: '网格员端',
     description: '面向网格员/巡查人员，提供任务查看、现场 AQI 数据上报等功能。',
     icon: 'grid',
-    available: false,
+    loginPath: '/nepg/login',
   },
   {
     code: 'NEPM',
     title: '系统管理端',
     description: '面向系统管理员，提供任务分配、数据确认、统计分析、预警处理和超时任务管理等功能。',
     icon: 'admin',
-    available: false,
+    loginPath: '/nepm/login',
   },
   {
     code: 'NEPV',
     title: '决策者可视化大屏',
     description: '面向决策者，提供环境数据统计分析和预警信息展示。',
     icon: 'screen',
-    available: false,
+    loginPath: '/nepv/login',
   },
 ]
 
 function enterSystem(system: SystemCard) {
-  if (system.available) {
-    void router.push('/neps/login')
-    return
-  }
-  notice.value = `${system.code} ${system.title}暂未开放`
+  notice.value = ''
+  void router.push(system.loginPath)
 }
 </script>
 
@@ -143,7 +140,7 @@ function enterSystem(system: SystemCard) {
           <p>{{ system.description }}</p>
 
           <button type="button" @click="enterSystem(system)">
-            {{ system.code === 'NEPV' ? '进入大屏' : '进入登录页' }} <span class="arrow" aria-hidden="true">→</span>
+            进入登录页 <span class="arrow" aria-hidden="true">→</span>
           </button>
         </article>
       </div>

@@ -4,9 +4,14 @@
 
 ## Active feature
 
-None
+`docs/4-tasks/features/TASK-005-employee-login/`
+- spec.md ✅ Ready
+- tasks.md → In progress（前后端实现中；验证由用户执行）
 
 ## Stages
+
+### TASK-005: NEPG、NEPM 与 NEPV 员工真实登录
+- [ ] Implementation (15 tasks)
 
 ### TASK-004: NEPS 公众监督员登录 MVP
 - [x] Implementation (14 tasks)

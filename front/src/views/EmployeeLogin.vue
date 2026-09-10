@@ -1,44 +1,107 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
+import { loginEmployee, type EmployeePortal } from '@/api/employeeAuth'
 import { loginNeps } from '@/api/nepsAuth'
 import type { ResultVO } from '@/api/aqiFeedback'
 import logo from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_09 PM (1).png'
 import background from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_10 PM (3).png'
 
+type LoginPortal = EmployeePortal | 'neps'
+
+const props = defineProps<{ portal: LoginPortal }>()
+
 const router = useRouter()
-const telId = ref('')
+const accountCode = ref('')
 const password = ref('')
 const showPassword = ref(false)
-const submitting = ref(false)
 const message = ref('')
-const messageType = ref<'error' | 'info'>('error')
+const submitting = ref(false)
 
-function showMessage(text: string, type: 'error' | 'info' = 'error') {
-  message.value = text
-  messageType.value = type
+const portalConfig = {
+  neps: {
+    code: 'NEPS',
+    title: '公众监督员端',
+    accountLabel: '手机号',
+    accountPlaceholder: '请输入手机号',
+    accountMaxLength: 32,
+    portalDescription: '数据赋能　守护美丽中国',
+    mission: ['让环境更美好', '让公众参与更有力量'],
+    ecoSlogan: '生态优先 · 绿色发展 · 共建共享',
+    accountNote: '还没有账号？立即注册',
+    portalPath: '/aqiFeedback',
+  },
+  nepg: {
+    code: 'NEPG',
+    title: '网格员端',
+    accountLabel: '登录编码',
+    accountPlaceholder: '请输入登录编码',
+    accountMaxLength: 20,
+    portalDescription: '面向网格员日常工作使用',
+    mission: ['让环境更美好', '让巡查更有力量'],
+    ecoSlogan: '生态优先 · 绿色发展 · 共建共享',
+    accountNote: '网格员账号由系统统一分配',
+    portalPath: '/nepg/portal',
+  },
+  nepm: {
+    code: 'NEPM',
+    title: '系统管理端',
+    accountLabel: '登录编码',
+    accountPlaceholder: '请输入登录编码',
+    accountMaxLength: 20,
+    portalDescription: '面向系统管理员使用',
+    mission: ['让环境更美好', '让管理更高效'],
+    ecoSlogan: '生态优先 · 绿色发展 · 共建共享',
+    accountNote: '管理员账号由系统统一维护',
+    portalPath: '/nepm/portal',
+  },
+  nepv: {
+    code: 'NEPV',
+    title: '决策者可视化大屏',
+    accountLabel: '账号',
+    accountPlaceholder: '请输入账号',
+    accountMaxLength: 20,
+    portalDescription: '面向生态环境决策支撑',
+    mission: ['数据洞察环境', '共建美丽中国'],
+    ecoSlogan: '生态优先 · 绿色发展 · 科学决策',
+    accountNote: '仅限授权用户访问',
+    portalPath: '/nepv/portal',
+  },
+} as const
+
+const config = computed(() => portalConfig[props.portal])
+const isNeps = computed(() => props.portal === 'neps')
+
+function returnToEntry() {
+  router.push('/')
 }
 
 async function submitLogin() {
-  const trimmedTelId = telId.value.trim()
-  if (!trimmedTelId || !password.value) {
-    showMessage('请输入手机号和密码')
+  const trimmedAccountCode = accountCode.value.trim()
+  if (!trimmedAccountCode || !password.value) {
+    message.value = `请输入${config.value.accountLabel}和密码`
     return
   }
 
   submitting.value = true
   message.value = ''
   try {
-    const response = await loginNeps({ telId: trimmedTelId, password: password.value })
+    const response = props.portal === 'neps'
+      ? await loginNeps({ telId: trimmedAccountCode, password: password.value })
+      : await loginEmployee(props.portal, {
+          accountCode: trimmedAccountCode,
+          password: password.value,
+        })
     if (response.data.code !== 200) {
-      showMessage(response.data.message || '登录失败，请稍后重试')
+      message.value = response.data.message || '登录失败，请稍后重试'
       return
     }
-    await router.push('/aqiFeedback')
+    password.value = ''
+    await router.push(config.value.portalPath)
   } catch (error) {
     const axiosError = error as AxiosError<ResultVO<null>>
-    showMessage(axiosError.response?.data.message || '登录失败，请检查网络后重试')
+    message.value = axiosError.response?.data.message || '登录失败，请检查网络后重试'
   } finally {
     submitting.value = false
   }
@@ -57,7 +120,7 @@ async function submitLogin() {
         <img class="brand-icon" :src="logo" alt="" aria-hidden="true" />
         <div class="brand-text">
           <span class="brand-name">东软环保公众监督系统</span>
-          <span class="brand-sub">NEPS 公众监督员端</span>
+          <span class="brand-sub">{{ config.code }} {{ config.title }}</span>
         </div>
       </div>
       <div class="header-slogan">
@@ -70,39 +133,41 @@ async function submitLogin() {
       </div>
     </header>
 
-    <section class="login-content" aria-labelledby="login-title">
+    <section class="login-content" :aria-labelledby="`${portal}-login-title`">
       <aside class="mission-copy" aria-label="系统理念">
-        <p class="script-slogan">让环境更美好<br />让公众参与更有力量</p>
+        <p class="script-slogan">{{ config.mission[0] }}<br />{{ config.mission[1] }}</p>
         <div class="green-arc" aria-hidden="true"></div>
-        <div class="eco-slogan">
-          <span>生态优先 · 绿色发展 · 共建共享</span>
-        </div>
+        <p class="eco-slogan">{{ config.ecoSlogan }}</p>
       </aside>
 
       <form class="login-card" @submit.prevent="submitLogin">
+        <button class="return-entry-link" type="button" @click="returnToEntry">
+          ← 返回
+        </button>
         <img class="card-logo" :src="logo" alt="" aria-hidden="true" />
-        <h1 id="login-title">东软环保公众监督系统</h1>
-        <h2>NEPS 公众监督员端</h2>
+        <h1 :id="`${portal}-login-title`">东软环保公众监督系统</h1>
+        <h2>{{ config.code }} {{ config.title }}</h2>
 
         <div class="card-subtitle-wrap">
           <span class="sub-line"></span>
-          <span class="card-subtitle">数据赋能　守护美丽中国</span>
+          <span class="card-subtitle">{{ config.portalDescription }}</span>
           <span class="sub-line"></span>
         </div>
 
         <div class="field-group">
-          <label for="tel-id">手机号</label>
+          <label for="account-code">{{ config.accountLabel }}</label>
           <div class="input-wrap">
             <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
             <input
-              id="tel-id"
-              v-model="telId"
-              type="tel"
+              id="account-code"
+              v-model="accountCode"
+              :name="isNeps ? 'telId' : 'accountCode'"
+              :type="isNeps ? 'tel' : 'text'"
+              :maxlength="config.accountMaxLength"
               autocomplete="username"
-              placeholder="请输入手机号"
-              maxlength="32"
+              :placeholder="config.accountPlaceholder"
               @input="message = ''"
             />
           </div>
@@ -117,6 +182,7 @@ async function submitLogin() {
             <input
               id="password"
               v-model="password"
+              name="password"
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="请输入密码"
@@ -128,41 +194,32 @@ async function submitLogin() {
               :aria-label="showPassword ? '隐藏密码' : '显示密码'"
               @click="showPassword = !showPassword"
             >
-              <svg v-if="showPassword" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" />
-              </svg>
+              {{ showPassword ? '隐藏' : '显示' }}
             </button>
           </div>
         </div>
 
-        <p v-if="message" class="form-message" :class="`form-message--${messageType}`" role="alert">
-          {{ message }}
-        </p>
+        <p v-if="message" class="form-message" role="alert">{{ message }}</p>
 
-        <button class="submit-button" type="submit" :disabled="submitting">
+        <button class="submit-button" type="submit" :disabled="submitting" :aria-busy="submitting">
           {{ submitting ? '登录中…' : '登 录' }}
         </button>
 
-        <div class="card-footer-tip">
-          <button class="register-link" type="button" @click="showMessage('注册功能暂未开放', 'info')">
-            还没有账号？<strong>立即注册</strong>
-          </button>
-        </div>
+        <button
+          v-if="isNeps"
+          class="card-footer-tip register-link"
+          type="button"
+          @click="message = '注册功能暂未开放'"
+        >
+          {{ config.accountNote }}
+        </button>
+        <p v-else class="card-footer-tip">{{ config.accountNote }}</p>
       </form>
     </section>
 
     <footer class="site-footer">
-      <div class="footer-left">
-        © 2024 东软环保公众监督系统　版权所有　|　Neusoft Environmental Public Supervision System
-      </div>
-      <div class="footer-right">
-        <span class="footer-dash">—</span>
-        <span>科技赋能　绿色未来</span>
-        <span class="footer-dash">—</span>
-      </div>
+      <div>© 2024 东软环保公众监督系统　版权所有　|　Neusoft Environmental Public Supervision System</div>
+      <div class="footer-right"><span>——</span><span>科技赋能　绿色未来</span><span>——</span></div>
     </footer>
   </main>
 </template>
@@ -179,25 +236,23 @@ async function submitLogin() {
   --hover-blue: #185ea6;
   position: relative;
   min-width: 1000px;
-  height: 100vh;
   min-height: 580px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   color: #122b46;
   background: #eaf3fb;
   box-sizing: border-box;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
 }
 
-/* 背景风景照 */
 .login-bg-wrap {
   position: absolute;
   inset: 0;
-  pointer-events: none;
   z-index: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .login-background {
@@ -205,101 +260,121 @@ async function submitLogin() {
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
-  opacity: 0.95;
 }
 
 .login-bg-mask {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.25) 0%,
-    rgba(255, 255, 255, 0.05) 45%,
-    rgba(255, 255, 255, 0.15) 100%
-  );
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.04) 48%, rgb(255 255 255 / 0.15));
 }
 
-/* 顶部导航：放大 Logo 与标题文字 */
-.site-header {
+.site-header,
+.site-footer {
   position: relative;
   z-index: 2;
-  height: clamp(74px, 10vh, 98px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 4.5%;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 1px 8px rgba(18, 48, 88, 0.06);
   box-sizing: border-box;
+  background: rgb(255 255 255 / 0.95);
+}
+
+.site-header {
+  height: clamp(74px, 10vh, 98px);
   flex-shrink: 0;
+  box-shadow: 0 1px 8px rgb(18 48 88 / 0.06);
 }
 
 .brand-wrap {
   display: flex;
   align-items: center;
   gap: 14px;
-  user-select: none;
 }
 
 .brand-icon {
   width: clamp(48px, 6.8vh, 64px);
   height: clamp(48px, 6.8vh, 64px);
   object-fit: contain;
-  flex-shrink: 0;
 }
 
 .brand-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  gap: 3px;
 }
 
 .brand-name {
   color: #082d5a;
   font-size: clamp(22px, 2.1vw, 29px);
   font-weight: 800;
-  line-height: 1.15;
   letter-spacing: 0.04em;
+  line-height: 1.15;
 }
 
 .brand-sub {
-  color: #3b5f88;
-  font-size: clamp(12px, 0.95vw, 15px);
+  color: #586e90;
+  font-size: clamp(12px, 1.1vw, 17px);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  margin-top: 3px;
 }
 
 .header-slogan {
-  text-align: center;
   color: #2a5585;
+  text-align: center;
 }
 
-.slogan-row {
+.return-entry-link {
+  position: absolute;
+  top: clamp(14px, 1.8vh, 20px);
+  left: clamp(18px, 2.2vw, 28px);
+  padding: 0;
+  color: #285789;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.25;
+  transition: color 180ms ease;
+}
+
+.return-entry-link:hover {
+  color: var(--primary-blue);
+}
+
+.return-entry-link:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 3px rgb(35 117 201 / 0.14);
+}
+
+.slogan-row,
+.footer-right {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  font-size: clamp(13.5px, 1.15vw, 17px);
+  gap: 12px;
+}
+
+.slogan-row {
+  font-size: clamp(13px, 1.15vw, 17px);
   font-weight: 500;
   letter-spacing: 0.22em;
 }
 
-.slogan-dash {
-  color: #8da4be;
-  font-weight: 300;
+.slogan-dash,
+.footer-right > span:first-child,
+.footer-right > span:last-child {
+  color: #9cb1c7;
   letter-spacing: -0.1em;
 }
 
 .slogan-en {
   display: block;
   margin-top: 3px;
-  font-size: clamp(10px, 0.8vw, 12px);
   color: #6a89ab;
-  letter-spacing: 0.05em;
+  font-size: clamp(10px, 0.8vw, 12px);
 }
 
-/* 内容区 */
 .login-content {
   position: relative;
   z-index: 1;
@@ -312,20 +387,21 @@ async function submitLogin() {
   margin: 0 auto;
   padding: clamp(6px, 1.5vh, 20px) 0;
   box-sizing: border-box;
-  min-height: 0;
 }
 
-/* 左侧理念 */
-.mission-copy {
-  align-self: center;
-  margin-bottom: clamp(8px, 1.5vh, 20px);
+.mission-copy,
+.login-card {
   text-align: center;
+}
+
+.mission-copy {
+  margin-bottom: clamp(8px, 1.5vh, 20px);
 }
 
 .script-slogan {
   margin: 0;
-  font-family: 'KaiTi', 'STKaiti', serif;
   color: #174a7f;
+  font-family: 'KaiTi', 'STKaiti', serif;
   font-size: clamp(26px, 2.6vw, 38px);
   line-height: 1.45;
   transform: rotate(-5deg);
@@ -341,34 +417,33 @@ async function submitLogin() {
 }
 
 .eco-slogan {
+  margin: 0;
   color: #386f8a;
   font-size: clamp(13px, 1.1vw, 16.5px);
-  letter-spacing: 0.18em;
   font-weight: 500;
+  letter-spacing: 0.18em;
 }
 
-/* 右侧登录卡片 */
 .login-card {
+  position: relative;
   padding: clamp(20px, 2.8vh, 32px) clamp(26px, 3.2vw, 44px);
+  background: #fff;
   border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 16px 36px rgba(18, 52, 92, 0.16);
-  text-align: center;
+  box-shadow: 0 16px 36px rgb(18 52 92 / 0.16);
   box-sizing: border-box;
 }
 
 .card-logo {
   width: clamp(52px, 6.2vh, 70px);
   height: clamp(52px, 6.2vh, 70px);
-  object-fit: contain;
   margin-bottom: clamp(2px, 0.4vh, 6px);
+  object-fit: contain;
 }
 
 .login-card h1 {
   margin: 0;
   color: #072b5c;
   font-size: clamp(21px, 2.2vh, 26px);
-  font-weight: 700;
   line-height: 1.25;
 }
 
@@ -376,13 +451,11 @@ async function submitLogin() {
   margin: 3px 0 0;
   color: #435b78;
   font-size: clamp(15px, 1.6vh, 18px);
-  font-weight: 600;
 }
 
 .card-subtitle-wrap {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   margin: clamp(8px, 1.2vh, 16px) 0 clamp(12px, 1.8vh, 20px);
 }
@@ -400,7 +473,6 @@ async function submitLogin() {
   white-space: nowrap;
 }
 
-/* 输入表单项 */
 .field-group {
   margin-bottom: clamp(10px, 1.5vh, 16px);
   text-align: left;
@@ -432,76 +504,64 @@ async function submitLogin() {
 .input-wrap input {
   width: 100%;
   height: clamp(42px, 5vh, 48px);
-  border: 1px solid #c7d7ea;
-  border-radius: 7px;
-  outline: none;
-  padding: 0 42px;
+  padding: 0 54px 0 42px;
   color: #1a395c;
   background: #fbfdff;
+  border: 1px solid #c7d7ea;
+  border-radius: 7px;
+  box-sizing: border-box;
   font: inherit;
   font-size: clamp(13px, 1.3vh, 15px);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  box-sizing: border-box;
 }
 
 .input-wrap input::placeholder {
   color: #9cb2cb;
 }
 
-.input-wrap input:focus {
+.input-wrap input:focus,
+.password-toggle:focus-visible,
+.submit-button:focus-visible {
+  outline: none;
   border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(35, 117, 201, 0.14);
+  box-shadow: 0 0 0 3px rgb(35 117 201 / 0.14);
 }
 
 .password-toggle {
   position: absolute;
   right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  color: #8da4be;
+  padding: 4px;
+  color: #617b9e;
   background: transparent;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
+  border: 0;
   border-radius: 4px;
-}
-
-.password-toggle:hover {
-  color: #3b5f88;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
 }
 
 .form-message {
   min-height: 18px;
   margin: -4px 0 8px;
+  color: #dc2626;
   text-align: left;
   font-size: clamp(12px, 1.1vh, 13px);
-}
-
-.form-message--error {
-  color: #dc2626;
-}
-
-.form-message--info {
-  color: #2563eb;
 }
 
 .submit-button {
   width: 100%;
   height: clamp(42px, 5.2vh, 50px);
-  min-height: 0;
   margin-top: 4px;
+  color: #fff;
+  background: var(--primary-blue);
   border: 0;
   border-radius: 7px;
-  color: #ffffff;
-  background: var(--primary-blue);
-  box-shadow: 0 4px 10px rgba(35, 117, 201, 0.25);
+  box-shadow: 0 4px 10px rgb(35 117 201 / 0.25);
+  cursor: pointer;
   font: inherit;
   font-size: clamp(15px, 1.65vh, 18px);
   font-weight: 600;
   letter-spacing: 0.28em;
-  cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition: background 180ms ease, transform 180ms ease;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -515,61 +575,32 @@ async function submitLogin() {
 }
 
 .card-footer-tip {
-  margin-top: clamp(10px, 1.6vh, 18px);
-  font-size: clamp(12px, 1.2vh, 13.5px);
+  margin: clamp(10px, 1.6vh, 18px) 0 0;
   color: #6a82a0;
+  font-size: clamp(12px, 1.2vh, 13.5px);
 }
 
 .register-link {
   border: 0;
   background: transparent;
-  color: #6a82a0;
-  font: inherit;
   cursor: pointer;
-  padding: 2px 6px;
+  font: inherit;
 }
 
-.register-link strong {
-  margin-left: 5px;
-  color: #1e70d4;
-  font-weight: 600;
-}
-
-.register-link:hover strong {
+.register-link:hover {
+  color: var(--primary-blue);
   text-decoration: underline;
 }
 
-/* 页脚 */
 .site-footer {
-  position: relative;
-  z-index: 2;
-  height: clamp(34px, 5vh, 48px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4.5%;
+  min-height: clamp(34px, 5vh, 48px);
   color: #7189a6;
   font-size: clamp(11px, 0.78vw, 13px);
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 -1px 4px rgba(18, 48, 88, 0.03);
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.footer-left {
-  letter-spacing: 0.02em;
 }
 
 .footer-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: 0.18em;
   color: #627e9e;
-}
-
-.footer-dash {
-  color: #9cb1c7;
+  letter-spacing: 0.18em;
 }
 
 @media (max-height: 620px) {
@@ -580,7 +611,6 @@ async function submitLogin() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .input-wrap input,
   .submit-button {
     transition: none;
   }
