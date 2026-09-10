@@ -13,22 +13,24 @@ export interface ResultVO<T> {
 
 export interface AqiFeedbackPayload {
   afId?: number
-  telId: string
   provinceId: number | null
   cityId: number | null
   address: string
   information: string
   estimatedGrade: number | null
-  afDate: string
-  afTime: string
 }
 
 export interface AqiFeedbackRow extends AqiFeedbackPayload {
   afId: number
+  afDate?: string
+  afTime?: string
   provinceName?: string
   cityName?: string
   state?: number
   timeoutFlag?: boolean
+  submittedAt?: string
+  assignedAt?: string
+  completedAt?: string
 }
 
 export function getAqiFeedbackList() {

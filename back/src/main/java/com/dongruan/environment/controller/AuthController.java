@@ -58,6 +58,12 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/neps/logout")
+    public ResponseEntity<ResultVO<Boolean>> logoutSupervisor(final HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.ok(new ResultVO<>(200, "退出登录成功", true));
+    }
+
     @PostMapping("/nepg/login")
     public ResponseEntity<ResultVO<?>> loginGridMember(
             @RequestBody final EmployeeLoginRequest request,

@@ -87,12 +87,13 @@ async function submitLogin() {
   submitting.value = true
   message.value = ''
   try {
-    const response = props.portal === 'neps'
-      ? await loginNeps({ telId: trimmedAccountCode, password: password.value })
-      : await loginEmployee(props.portal, {
-          accountCode: trimmedAccountCode,
-          password: password.value,
-        })
+    const response =
+      props.portal === 'neps'
+        ? await loginNeps({ telId: trimmedAccountCode, password: password.value })
+        : await loginEmployee(props.portal, {
+            accountCode: trimmedAccountCode,
+            password: password.value,
+          })
     if (response.data.code !== 200) {
       message.value = response.data.message || '登录失败，请稍后重试'
       return
@@ -141,9 +142,7 @@ async function submitLogin() {
       </aside>
 
       <form class="login-card" @submit.prevent="submitLogin">
-        <button class="return-entry-link" type="button" @click="returnToEntry">
-          ← 返回
-        </button>
+        <button class="return-entry-link" type="button" @click="returnToEntry">← 返回</button>
         <img class="card-logo" :src="logo" alt="" aria-hidden="true" />
         <h1 :id="`${portal}-login-title`">东软环保公众监督系统</h1>
         <h2>{{ config.code }} {{ config.title }}</h2>
@@ -158,7 +157,9 @@ async function submitLogin() {
           <label for="account-code">{{ config.accountLabel }}</label>
           <div class="input-wrap">
             <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+              />
             </svg>
             <input
               id="account-code"
@@ -177,7 +178,9 @@ async function submitLogin() {
           <label for="password">密码</label>
           <div class="input-wrap">
             <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              <path
+                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+              />
             </svg>
             <input
               id="password"
@@ -218,7 +221,9 @@ async function submitLogin() {
     </section>
 
     <footer class="site-footer">
-      <div>© 2024 东软环保公众监督系统　版权所有　|　Neusoft Environmental Public Supervision System</div>
+      <div>
+        © 2024 东软环保公众监督系统　版权所有　|　Neusoft Environmental Public Supervision System
+      </div>
       <div class="footer-right"><span>——</span><span>科技赋能　绿色未来</span><span>——</span></div>
     </footer>
   </main>
@@ -265,7 +270,12 @@ async function submitLogin() {
 .login-bg-mask {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.04) 48%, rgb(255 255 255 / 0.15));
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0.04) 48%,
+    rgb(255 255 255 / 0.15)
+  );
 }
 
 .site-header,
@@ -561,7 +571,9 @@ async function submitLogin() {
   font-size: clamp(15px, 1.65vh, 18px);
   font-weight: 600;
   letter-spacing: 0.28em;
-  transition: background 180ms ease, transform 180ms ease;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
 }
 
 .submit-button:hover:not(:disabled) {

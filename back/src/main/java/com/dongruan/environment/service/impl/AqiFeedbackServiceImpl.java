@@ -3,6 +3,7 @@ package com.dongruan.environment.service.impl;
 import com.dongruan.environment.mapper.AqiFeedbackMapper;
 import com.dongruan.environment.entity.AqiFeedback;
 import com.dongruan.environment.service.IAqiFeedbackService;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +21,13 @@ import java.util.Optional;
 @Service
 public class AqiFeedbackServiceImpl extends ServiceImpl<AqiFeedbackMapper, AqiFeedback> implements IAqiFeedbackService {
     @Override
-    public List<AqiFeedback> findAll() {
-        return baseMapper.findAll();
+    public List<AqiFeedback> findBySupervisorTelId(final String telId) {
+        return baseMapper.findByTelId(telId);
     }
 
     @Override
-    public Optional<AqiFeedback> findById(final Integer afId) {
-        return Optional.ofNullable(getById(afId));
+    public Optional<AqiFeedback> findBySupervisorTelIdAndId(final Integer afId, final String telId) {
+        return Optional.ofNullable(baseMapper.findByIdAndTelId(afId, telId));
     }
 
     @Override
@@ -35,12 +36,20 @@ public class AqiFeedbackServiceImpl extends ServiceImpl<AqiFeedbackMapper, AqiFe
     }
 
     @Override
-    public boolean updateFeedback(final AqiFeedback feedback) {
-        return updateById(feedback);
+    public boolean updateOwnedPendingFeedback(final AqiFeedback feedback, final String telId) {
+        return update(feedback, new LambdaUpdateWrapper<AqiFeedback>()
+                .eq(AqiFeedback::getAfId, feedback.getAfId())
+                .eq(AqiFeedback::getTelId, telId)
+                .eq(AqiFeedback::getState, 0)
+                .eq(AqiFeedback::getTimeoutFlag, false));
     }
 
     @Override
-    public boolean deleteFeedback(final Integer afId) {
-        return removeById(afId);
+    public boolean deleteOwnedPendingFeedback(final Integer afId, final String telId) {
+        return remove(new LambdaUpdateWrapper<AqiFeedback>()
+                .eq(AqiFeedback::getAfId, afId)
+                .eq(AqiFeedback::getTelId, telId)
+                .eq(AqiFeedback::getState, 0)
+                .eq(AqiFeedback::getTimeoutFlag, false));
     }
 }

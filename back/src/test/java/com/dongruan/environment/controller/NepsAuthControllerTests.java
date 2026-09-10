@@ -10,15 +10,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.dongruan.environment.auth.InvalidCredentialsException;
 import com.dongruan.environment.dto.NepsLoginResponse;
+import com.dongruan.environment.service.IEmployeeAuthService;
 import com.dongruan.environment.service.INepsAuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(NepsAuthController.class)
+@WebMvcTest(AuthController.class)
 class NepsAuthControllerTests {
 
     @Autowired
@@ -26,6 +28,9 @@ class NepsAuthControllerTests {
 
     @MockBean
     private INepsAuthService nepsAuthService;
+
+    @MockBean
+    private IEmployeeAuthService employeeAuthService;
 
     @Test
     void logsInAndCreatesSessionForValidCredentials() throws Exception {
@@ -39,7 +44,7 @@ class NepsAuthControllerTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.telId").value("13800000000"))
                 .andExpect(jsonPath("$.data.realName").value("测试监督员"))
-                .andExpect(request().sessionAttribute(NepsAuthController.SESSION_TEL_ID, "13800000000"));
+                .andExpect(request().sessionAttribute(AuthController.SESSION_TEL_ID, "13800000000"));
     }
 
     @Test
@@ -64,5 +69,18 @@ class NepsAuthControllerTests {
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.message").value("手机号或密码错误"))
                 .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void logsOutAndInvalidatesCurrentSession() throws Exception {
+        final MockHttpSession session = new MockHttpSession();
+        session.setAttribute(AuthController.SESSION_TEL_ID, "13800000000");
+
+        mockMvc.perform(post("/auth/neps/logout").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").value(true));
+
+        org.junit.jupiter.api.Assertions.assertTrue(session.isInvalid());
     }
 }

@@ -8,9 +8,21 @@ const props = defineProps<{ portal: EmployeePortal }>()
 
 const router = useRouter()
 const portalConfig = {
-  nepg: { code: 'NEPG', title: '网格员端', description: '登录状态已建立，检测任务功能将在后续任务中开放。' },
-  nepm: { code: 'NEPM', title: '系统管理端', description: '登录状态已建立，任务管理功能将在后续任务中开放。' },
-  nepv: { code: 'NEPV', title: '决策者可视化端', description: '登录状态已建立，统计与预警大屏将在后续任务中开放。' },
+  nepg: {
+    code: 'NEPG',
+    title: '网格员端',
+    description: '登录状态已建立，检测任务功能将在后续任务中开放。',
+  },
+  nepm: {
+    code: 'NEPM',
+    title: '系统管理端',
+    description: '登录状态已建立，任务管理功能将在后续任务中开放。',
+  },
+  nepv: {
+    code: 'NEPV',
+    title: '决策者可视化端',
+    description: '登录状态已建立，统计与预警大屏将在后续任务中开放。',
+  },
 } as const
 
 const config = computed(() => portalConfig[props.portal])

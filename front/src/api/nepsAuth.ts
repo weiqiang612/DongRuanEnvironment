@@ -19,3 +19,7 @@ export interface NepsLoginUser {
 export function loginNeps(payload: NepsLoginPayload) {
   return request.post<ResultVO<NepsLoginUser>>('auth/neps/login', payload)
 }
+
+export function logoutNeps() {
+  return request.post<ResultVO<boolean>>('auth/neps/logout')
+}

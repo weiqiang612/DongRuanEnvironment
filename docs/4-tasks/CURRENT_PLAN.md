@@ -4,11 +4,14 @@
 
 ## Active feature
 
-`docs/4-tasks/features/TASK-005-employee-login/`
+`docs/4-tasks/features/TASK-006-feedback-lifecycle/`
 - spec.md ✅ Ready
-- tasks.md → In progress（前后端实现中；验证由用户执行）
+- tasks.md → In progress（实现与质量检查已完成，等待浏览器验收）
 
 ## Stages
+
+### TASK-006: NEPS 反馈归属与生命周期
+- [ ] Implementation (13 tasks)
 
 ### TASK-005: NEPG、NEPM 与 NEPV 员工真实登录
 - [ ] Implementation (15 tasks)

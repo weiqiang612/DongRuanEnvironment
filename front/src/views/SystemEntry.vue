@@ -122,21 +122,47 @@ function enterSystem(system: SystemCard) {
               </svg>
               <!-- NEPM: 经典8齿机械齿轮 -->
               <svg v-else-if="system.icon === 'admin'" viewBox="0 0 48 48">
-                <path d="M21 5h6v5.2a14.8 14.8 0 0 1 4.2 1.7l3.7-3.7 4.2 4.2-3.7 3.7c.7 1.3 1.3 2.7 1.7 4.2H42v6h-5.2a14.8 14.8 0 0 1-1.7 4.2l3.7 3.7-4.2 4.2-3.7-3.7a14.8 14.8 0 0 1-4.2 1.7V43h-6v-5.2a14.8 14.8 0 0 1-4.2-1.7l-3.7 3.7-4.2-4.2 3.7-3.7a14.8 14.8 0 0 1-1.7-4.2H6v-6h5.2a14.8 14.8 0 0 1 1.7-4.2l-3.7-3.7 4.2-4.2 3.7 3.7a14.8 14.8 0 0 1 4.2-1.7V5zm3 12a7 7 0 1 0 0 14 7 7 0 0 0 0-14z" />
+                <path
+                  d="M21 5h6v5.2a14.8 14.8 0 0 1 4.2 1.7l3.7-3.7 4.2 4.2-3.7 3.7c.7 1.3 1.3 2.7 1.7 4.2H42v6h-5.2a14.8 14.8 0 0 1-1.7 4.2l3.7 3.7-4.2 4.2-3.7-3.7a14.8 14.8 0 0 1-4.2 1.7V43h-6v-5.2a14.8 14.8 0 0 1-4.2-1.7l-3.7 3.7-4.2-4.2 3.7-3.7a14.8 14.8 0 0 1-1.7-4.2H6v-6h5.2a14.8 14.8 0 0 1 1.7-4.2l-3.7-3.7 4.2-4.2 3.7 3.7a14.8 14.8 0 0 1 4.2-1.7V5zm3 12a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"
+                />
               </svg>
               <!-- NEPV: 决策者大屏与折线走势 -->
               <svg v-else viewBox="0 0 48 48">
-                <rect x="6" y="8" width="36" height="25" rx="3" fill="none" stroke="currentColor" stroke-width="3" />
-                <polyline points="13,23 20,16 26,21 35,12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <rect
+                  x="6"
+                  y="8"
+                  width="36"
+                  height="25"
+                  rx="3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                />
+                <polyline
+                  points="13,23 20,16 26,21 35,12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
                 <circle cx="20" cy="16" r="2.2" />
                 <circle cx="26" cy="21" r="2.2" />
                 <circle cx="35" cy="12" r="2.2" />
-                <path d="M17 39h14M24 33v6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                <path
+                  d="M17 39h14M24 33v6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
               </svg>
             </div>
           </div>
 
-          <h2><strong>{{ system.code }}</strong> {{ system.title }}</h2>
+          <h2>
+            <strong>{{ system.code }}</strong> {{ system.title }}
+          </h2>
           <p>{{ system.description }}</p>
 
           <button type="button" @click="enterSystem(system)">
@@ -149,7 +175,9 @@ function enterSystem(system: SystemCard) {
         <div class="tip-line"></div>
         <div class="tip-pill" role="status" aria-live="polite">
           <svg class="tip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+            />
           </svg>
           <span>{{ notice || '请根据账号所属角色进入对应系统端' }}</span>
         </div>
@@ -220,7 +248,7 @@ function enterSystem(system: SystemCard) {
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.0) 25%,
+    rgba(255, 255, 255, 0) 25%,
     rgba(244, 248, 252, 0.25) 60%,
     rgba(244, 248, 252, 0.82) 85%,
     rgba(244, 248, 252, 1) 100%
@@ -412,7 +440,9 @@ h1 {
   background: #ffffff;
   border: 1px solid rgba(175, 198, 224, 0.38);
   box-shadow: 0 10px 28px rgba(22, 54, 92, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -522,7 +552,9 @@ button {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
   flex-shrink: 0;
 }
 
@@ -611,7 +643,8 @@ button .arrow {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .system-card, button {
+  .system-card,
+  button {
     transition: none;
   }
 }

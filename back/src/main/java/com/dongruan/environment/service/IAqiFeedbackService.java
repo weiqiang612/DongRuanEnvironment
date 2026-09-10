@@ -15,13 +15,13 @@ import java.util.Optional;
  * @since 2026-09-03
  */
 public interface IAqiFeedbackService extends IService<AqiFeedback> {
-    List<AqiFeedback> findAll();
+    List<AqiFeedback> findBySupervisorTelId(String telId);
 
-    Optional<AqiFeedback> findById(Integer afId);
+    Optional<AqiFeedback> findBySupervisorTelIdAndId(Integer afId, String telId);
 
     boolean saveFeedback(AqiFeedback feedback);
 
-    boolean updateFeedback(AqiFeedback feedback);
+    boolean updateOwnedPendingFeedback(AqiFeedback feedback, String telId);
 
-    boolean deleteFeedback(Integer afId);
+    boolean deleteOwnedPendingFeedback(Integer afId, String telId);
 }
