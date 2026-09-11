@@ -43,6 +43,22 @@
 
 成功时返回 HTTP 200、`code: 200`，`data` 仅含 `accountCode`、`displayName`、`role`，其中角色分别为 `NEPG_GRID_MEMBER`、`NEPM_ADMIN`、`NEPV_DECISION_MAKER`。服务端仅向 HTTP Session 写入这三项非敏感身份信息。缺失字段返回 HTTP 400；未知账号、错误密码、`admins.role_code` 为空或角色与入口不匹配时统一返回 HTTP 401、`code: 401`、`message: "账号或密码错误"`，不得泄露账号或角色存在性。
 
+### NEPM 管理者工作台与任务调度（TASK-007）
+
+以下接口均要求员工 Session 同时具备 `employeeRole = NEPM_ADMIN` 与非空 `employeeAccountCode`。Session 缺失时返回 HTTP 401、`code: 401`、`message: "请先登录"`；角色不匹配、管理员账号不能解析或操作越权时返回 HTTP 403、`code: 403`、`message: "无管理端权限"`。所有响应保持 `ResultVO` 外层，服务端不得返回密码、Session 内容或未授权员工信息。
+
+| 方法 | 后端路径 | 请求 | 成功 `data` | 失败边界 |
+|---|---|---|---|---|
+| GET | `/nepm/dashboard` | 无 | 待指派、已指派、已完成、超时数量与近期待办反馈 | 无权限按管理端 Session 规则拒绝。 |
+| GET | `/nepm/feedbacks` | 查询参数 `provinceId`、`cityId`、`states`、`timeoutOnly`、`estimatedGrade`、`submittedFrom`、`submittedTo`、`keyword`、`page`、`pageSize` 均可选；`states` 可重复传入 | `{ items, total, page, pageSize }`；每项含反馈、地区名称、当前网格员名称和展示状态 | 日期、枚举、分页参数不合法返回 HTTP 400。 |
+| GET | `/nepm/feedbacks/{afId}` | 路径 `afId` | 反馈详情、当前网格员、指派日志和处理流程展示数据 | 不存在返回 HTTP 404。 |
+| GET | `/nepm/feedbacks/{afId}/candidates` | 路径 `afId` | 同城优先、同省其他城市兜底的可工作网格员列表；每项含人员、地区和来源层级 | 不存在返回 HTTP 404；同省无候选人时返回空列表而非虚构候选人。 |
+| POST | `/nepm/feedbacks/{afId}/dispatch` | `{ "gridMemberId": "网格员手机号" }` | 更新后的反馈调度信息和新写入的指派日志 | 已完成、候选人不可工作或反馈状态已变化返回 HTTP 409、`code: 409`；请求不得携带操作人、状态、超时标识或日志字段。 |
+| GET | `/nepm/timeout-alerts` | `provinceId`、`cityId`、`states`、`submittedFrom`、`submittedTo`、`keyword`、`page`、`pageSize` 均可选 | 超时反馈分页数据与当前网格员 | 仅返回既有超时标识为真的反馈；预警处置状态留待预警模块实现。 |
+| GET | `/nepm/analytics/overview` | 可选 `provinceId`、`cityId`、`submittedFrom`、`submittedTo` | 反馈总数及待指派、已指派、已完成、超时数量 | 只基于反馈与调度数据，不返回最终 AQI、检测结果或 AQI 预警统计。 |
+
+`POST /nepm/feedbacks/{afId}/dispatch` 由服务端依据当前反馈和目标人员决定日志动作：`state = 0` 时记录 `ASSIGN`；已指派或已超时且目标人员不同于当前 `gm_id` 时记录 `REASSIGN`；目标人员等于当前 `gm_id` 时记录 `CONTINUE` 且不改变指派事实。服务层在一个事务中完成状态校验、候选可工作性校验、反馈更新和日志写入；前端不传入或覆盖 `adminId`、`operatorId`、`state`、`timeoutFlag`、时间字段或 `actionType`。
+
 ## 目标契约原则
 
 需求文档定义的认证、任务、检测、统计和 HR 接口尚未实现，以下是后续设计必须遵守的契约边界，而不是可调用的当前 API：
@@ -51,7 +67,7 @@
 |---|---|---|
 | 用户认证 | NEPS、NEPG、NEPM、NEPV | 公众或员工身份校验；当前使用最小 HTTP Session，后续认证方式变更须独立设计。 |
 | 公众反馈 | NEPS | 创建反馈、查询本人反馈和处理进度；服务端验证反馈归属。 |
-| 检测任务指派 | NEPM | 指派或重新指派网格员；服务端查询 HR 工作状态并记录指派日志。 |
+| 检测任务指派 | NEPM | 指派或重新指派网格员；TASK-007 暂以本地网格员工作状态筛选候选人并记录指派日志，HR 实时状态查询留待独立任务。 |
 | 实测 AQI 提交 | NEPG | 校验三项浓度，服务端计算最终 AQI 并完成任务；禁止由客户端传入最终值。 |
 | 统计与预警查询 | NEPM、NEPV | 仅返回按角色授权的数据，统计口径为有效完成的检测结果。 |
 | HR 人员查询 | 服务端 | 查询员工、区域和工作状态；不向浏览器端暴露。 |

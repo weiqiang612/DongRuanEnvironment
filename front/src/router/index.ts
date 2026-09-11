@@ -40,8 +40,7 @@ const router = createRouter({
     {
       path: '/nepm/portal',
       name: 'nepmPortal',
-      component: () => import('../views/EmployeePortal.vue'),
-      props: { portal: 'nepm' },
+      component: () => import('../views/NepmWorkbench.vue'),
     },
     {
       path: '/nepv/portal',

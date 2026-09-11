@@ -21,4 +21,15 @@ public class GridMember {
     private String gmCode;
 
     private String password;
+
+    @TableField("province_id")
+    private Integer provinceId;
+
+    @TableField("city_id")
+    private Integer cityId;
+
+    private Integer state;
+
+    @TableField(exist = false)
+    private String cityName;
 }

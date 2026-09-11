@@ -1,0 +1,52 @@
+:root {
+  --nepm-primary: #1677ff;
+  --nepm-primary-hover: #4096ff;
+  --nepm-primary-active: #0958d9;
+  --nepm-primary-deep: #102f5e;
+  --nepm-primary-light: #e8f3ff;
+  --nepm-primary-lighter: #f0f7ff;
+
+  --nepm-success: #22c55e;
+  --nepm-success-light: #f0fdf4;
+  --nepm-success-border: #bbf7d0;
+
+  --nepm-warning: #eab308;
+  --nepm-warning-light: #fefce8;
+  --nepm-warning-border: #fef08a;
+
+  --nepm-orange: #f97316;
+  --nepm-orange-light: #fff7ed;
+  --nepm-orange-border: #fed7aa;
+
+  --nepm-danger: #ef4444;
+  --nepm-danger-light: #fef2f2;
+  --nepm-danger-border: #fecaca;
+
+  --nepm-purple: #8b5cf6;
+  --nepm-purple-light: #f5f3ff;
+  --nepm-purple-border: #ddd6fe;
+
+  --nepm-bg: #f5f8fc;
+  --nepm-surface: #ffffff;
+  --nepm-text-primary: #1f2937;
+  --nepm-text-regular: #374151;
+  --nepm-text-secondary: #64748b;
+  --nepm-text-disabled: #94a3b8;
+  --nepm-border: #e2e8f0;
+  --nepm-border-light: #edf2f7;
+
+  --nepm-radius-sm: 4px;
+  --nepm-radius: 8px;
+  --nepm-radius-lg: 12px;
+  --nepm-shadow-sm: 0 1px 3px rgba(16, 47, 94, 0.04);
+  --nepm-shadow: 0 2px 8px rgba(16, 47, 94, 0.05);
+  --nepm-shadow-md: 0 4px 16px rgba(16, 47, 94, 0.08);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+}

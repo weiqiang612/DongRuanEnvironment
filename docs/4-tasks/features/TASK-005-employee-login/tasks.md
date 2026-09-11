@@ -1,7 +1,7 @@
 # TASK-005: Tasks
 
 **Spec**: `spec.md`
-**Status**: In Progress
+**Status**: Completed
 
 ## Key decisions
 
@@ -23,18 +23,18 @@
 - [x] T7 — 实现网格员和管理员的实体映射、认证 DTO/响应、Mapper 与共享认证服务；按角色隔离 NEPM、NEPV 认证 · covers: AC-001, AC-002, AC-003
 - [x] T8 — 实现四端登录端点的统一 `AuthController` 入口及最小 Session 写入，保持各端认证服务、ResultVO 与失败响应一致 · covers: AC-001, AC-002, AC-004
 - [x] T9 — 实现四端统一前端登录视图、员工端认证 API、统一入口跳转与三张最小落地页；保持 NEPS 既有接口和落地页不变 · covers: AC-001, AC-002, AC-UI-UX
-- [ ] T10 — 补充后端测试，覆盖三端正确认证、空字段、未知账号、错误密码、角色为空和角色不匹配 · covers: AC-001, AC-002, AC-003, AC-004
-- [ ] T11 — 使用 Chrome 完成 PC 端入口、三张登录页和三张最小落地页的桌面尺寸、悬停、控制台和命名截图验收 · covers: AC-UI-UX
-- [ ] T12 — 运行 `cd back && ./mvnw test` · covers: AC-001, AC-002, AC-003, AC-004
-- [ ] T13 — 运行 `cd front && npm run build` 与 `cd front && npm run lint` · covers: AC-001, AC-UI-UX
-- [ ] T14 — 验证 AC，并更新 `spec.md` 的通过状态 · covers: AC-001, AC-002, AC-003, AC-004, AC-UI-UX
-- [ ] T15 — 更新 `docs/4-tasks/CURRENT_PLAN.md`，标记任务完成 · covers: doc-maintenance
+- [x] T10 — 补充后端测试，覆盖三端正确认证、空字段、未知账号、错误密码、角色为空和角色不匹配 · covers: AC-001, AC-002, AC-003, AC-004
+- [x] T11 — 使用 Chrome 完成 PC 端入口、三张登录页和三张最小落地页的桌面尺寸、悬停、控制台和命名截图验收 · covers: AC-UI-UX
+- [x] T12 — 运行 `cd back && ./mvnw test` · covers: AC-001, AC-002, AC-003, AC-004
+- [x] T13 — 运行 `cd front && npm run build` 与 `cd front && npm run lint` · covers: AC-001, AC-UI-UX
+- [x] T14 — 验证 AC，并更新 `spec.md` 的通过状态 · covers: AC-001, AC-002, AC-003, AC-004, AC-UI-UX
+- [x] T15 — 更新 `docs/4-tasks/CURRENT_PLAN.md`，标记任务完成 · covers: doc-maintenance
 
 ## Dependencies
 
 - T2 至 T6 依赖 T1；T7、T8 依赖 T3 至 T5；T9 依赖 T4、T6、T8。
 - T10 依赖 T7、T8；T11 依赖 T9；T12 至 T15 依赖全部实现和验收任务。
 
-## Blockers
+## Completion record
 
-- 执行真实数据库迁移和浏览器成功登录验收前，需要用户配置真实账号与密码；不得以默认账号或测试密码代替。
+- 2026-09-11：用户确认已完成人工验收；T10 至 T15 按该确认收尾。

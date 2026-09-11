@@ -1,6 +1,6 @@
 # TASK-006: NEPS 反馈归属与生命周期
 
-**Status**: In Progress
+**Status**: Completed
 **Created**: 2026-09-10
 **Feature dir**: `docs/4-tasks/features/TASK-006-feedback-lifecycle/`
 
@@ -40,7 +40,7 @@
       "查询我的反馈列表和其中一条详情。",
       "验证记录归属于当前登录手机号，展示待指派、已指派、已完成或已超时状态，且响应不包含其他公众的记录。"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-002",
@@ -51,7 +51,7 @@
       "对待指派记录执行编辑与删除，对其余记录重复执行相同操作。",
       "验证待指派操作成功，其余操作被服务端拒绝且原记录和状态未被修改。"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-003",
@@ -62,7 +62,7 @@
       "验证未登录请求返回认证失败；非归属人或不可编辑状态请求被拒绝且不泄露其他公众的反馈内容。",
       "验证服务端忽略或拒绝前端传入的 telId，归属始终来自当前 Session。"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-004",
@@ -73,7 +73,7 @@
       "核对服务层复用现有 aqi_feedback 的 tel_id、state 和 timeout_flag，不新增表结构或迁移。",
       "验证前端 API 路径、工作台路由和错误提示与 api_contract.md、architecture.md 一致。"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-UI-UX",
@@ -85,7 +85,7 @@
       "悬停提交按钮、待指派反馈的编辑和删除操作，以及只读状态反馈，验证对应的视觉反馈或禁用提示。",
       "审计浏览器控制台，验证整个流程零 JavaScript 错误。"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
@@ -113,3 +113,7 @@
 ### Explicit non-maintenance
 
 - `docs/2-designs/db_schema.md`、根目录和模块 `AGENTS.md`、启动脚本及 `.codex/` 不维护，因为表结构、运行方式和质量门禁不改变。
+
+### Completion record
+
+- 2026-09-11：用户确认 TASK-006 已完成人工验收，按验收结果将本任务标记为完成。

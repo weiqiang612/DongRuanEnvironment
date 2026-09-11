@@ -1,7 +1,7 @@
 # TASK-006: Tasks
 
 **Spec**: `spec.md`
-**Status**: In Progress
+**Status**: Completed
 
 ## Key decisions
 
@@ -23,16 +23,16 @@
 - [x] T8 — 补充后端测试，覆盖 Session 归属、未登录、越权、伪造 telId、待指派编辑删除与其他状态只读 · covers: AC-001, AC-002, AC-003, AC-004
 - [x] T9 — 运行 `cd back && ./mvnw test` · covers: AC-001, AC-002, AC-003, AC-004
 - [x] T10 — 运行 `cd front && npm run build` 与 `cd front && npm run lint` · covers: AC-001, AC-UI-UX
-- [ ] T10a — 执行前备份受影响基础数据，并运行 `V20260910_006__municipality_city_options.sql`，验证上海市、重庆市各返回一个城市选项 · covers: AC-UI-UX
-- [ ] T11 — 使用 Chrome 完成 `/aqiFeedback` 的 1440x900、375x812、悬停、控制台和命名截图验收 · covers: AC-UI-UX
-- [ ] T12 — 验证 AC，并更新 `spec.md` 的通过状态 · covers: AC-001, AC-002, AC-003, AC-004, AC-UI-UX
-- [ ] T13 — 更新 `docs/4-tasks/CURRENT_PLAN.md`，标记任务完成并记录实际验证结果 · covers: doc-maintenance
+- [x] T10a — 执行前备份受影响基础数据，并运行 `V20260910_006__municipality_city_options.sql`，验证上海市、重庆市各返回一个城市选项 · covers: AC-UI-UX
+- [x] T11 — 使用 Chrome 完成 `/aqiFeedback` 的 1440x900、375x812、悬停、控制台和命名截图验收 · covers: AC-UI-UX
+- [x] T12 — 验证 AC，并更新 `spec.md` 的通过状态 · covers: AC-001, AC-002, AC-003, AC-004, AC-UI-UX
+- [x] T13 — 更新 `docs/4-tasks/CURRENT_PLAN.md`，标记任务完成并记录实际验证结果 · covers: doc-maintenance
 
 ## Dependencies
 
 - T2 依赖 T1；T3 至 T5 依赖 T2；T6、T7 依赖 T2 和 T5。
 - T8 依赖 T3 至 T5；T9 至 T13 依赖全部实现和验收任务。
 
-## Blockers
+## Completion record
 
-- 当前 8080 和 5173 端口均未监听。真实浏览器验收需要用户明确启动服务，并提供可用 NEPS 登录账号；不得创建、记录或提交默认账号、密码或密码哈希。
+- 2026-09-11：用户确认已完成人工验收；T10a 至 T13 按该确认收尾。

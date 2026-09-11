@@ -24,6 +24,8 @@ NEPS / NEPG / NEPM / NEPV
 
 主链路为：NEPS 创建反馈 → NEPM 查询候选网格员并指派 → NEPG 提交实测数据 → 服务层计算最终 AQI → 生成预警、超时标识和统计 → NEPM、NEPV 展示结果。超时由定时扫描与查询时判定结合处理。
 
+TASK-007 的 NEPM 调度层复用 `aqi_feedback` 作为任务主表、`grid_member` 作为候选人员来源、`admins` 作为操作人来源和 `task_assign_log` 作为追溯记录。管理端 Controller 在每个入口校验员工 Session 中的 `employeeRole = NEPM_ADMIN` 与 `employeeAccountCode`，服务层再解析实际 `admin_id`；首次指派、重派和继续处理在同一事务中校验反馈状态、候选网格员可工作性并写入日志。候选查询只使用本地 `grid_member.state = 0`，按同城优先、同省其他城市兜底，不在事务中调用东软 HR。
+
 ## 设计约束
 
 - 依赖方向固定为“前端 → 服务层 → 数据访问层或外部接口”，禁止跨层直接访问。

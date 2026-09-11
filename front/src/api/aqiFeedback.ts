@@ -26,11 +26,14 @@ export interface AqiFeedbackRow extends AqiFeedbackPayload {
   afTime?: string
   provinceName?: string
   cityName?: string
+  gmName?: string
   state?: number
   timeoutFlag?: boolean
+  timeoutAt?: string
   submittedAt?: string
   assignedAt?: string
   completedAt?: string
+  gmId?: string
 }
 
 export function getAqiFeedbackList() {

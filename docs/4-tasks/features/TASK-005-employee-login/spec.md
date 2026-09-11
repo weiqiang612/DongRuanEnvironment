@@ -1,6 +1,6 @@
 # TASK-005: NEPG、NEPM 与 NEPV 员工真实登录
 
-**Status**: In Progress
+**Status**: Completed
 **Created**: 2026-09-09
 **Feature dir**: `docs/4-tasks/features/TASK-005-employee-login/`
 
@@ -36,35 +36,35 @@
     "category": "functional",
     "description": "用户可从统一入口进入四端统一登录视图；NEPS 保持既有成功跳转，配置了正确身份、密码和角色的员工账号进入对应端的最小落地页。",
     "steps": ["在 / 依次选择四端卡片。", "验证 NEPS 仍使用手机号登录并进入 /aqiFeedback；分别提交有效的网格员账号，以及具备 NEPM_ADMIN 或 NEPV_DECISION_MAKER 角色的管理员账号。", "验证接口返回成功、Session 仅写入非敏感身份和角色，且员工端进入匹配的 /nepg/portal、/nepm/portal 或 /nepv/portal。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-002",
     "category": "edge-case",
     "description": "缺少字段、未知账号、错误密码、角色为空或角色与入口不匹配时，接口安全拒绝请求且页面保留在当前登录页。",
     "steps": ["分别提交空账号、空密码、未知账号、错误密码和角色不匹配的管理员账号。", "验证字段错误返回 HTTP 400，认证或角色失败统一返回 HTTP 401。", "验证失败信息不泄露账号存在性、密码校验或角色数据。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-003",
     "category": "security",
     "description": "网格员与管理员密码均以 PBKDF2 形式保存和比较，且 NEPV 身份只能通过 admins 表的显式决策者角色取得。",
     "steps": ["核对 grid_member 与 admins 的迁移、回滚脚本和服务层认证逻辑。", "验证登录响应、Session、日志、测试和前端状态不包含明文密码或密码哈希。", "验证迁移不插入默认账号或默认密码，角色为空的管理员不能登录。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-004",
     "category": "integration",
     "description": "三端登录接口、数据库映射、管理员角色及前端 API 客户端与更新后的契约一致。",
     "steps": ["核对 POST /auth/nepg/login、POST /auth/nepm/login、POST /auth/nepv/login 的请求、成功和失败 ResultVO 契约。", "在执行迁移前核对真实表字段、受影响行数和备份要求，再验证迁移与回滚脚本符合 db_schema.md。", "验证前端请求路径、路由和成功跳转与 api_contract.md 一致。"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "AC-UI-UX",
     "category": "integration",
     "description": "Chrome 在 PC 桌面尺寸验证三端入口、登录页与最小落地页均清晰、可操作，且控制台无 JavaScript 错误。",
     "steps": ["在 1440x900 访问 /、/nepg/login、/nepm/login、/nepv/login，验证布局、品牌、表单、错误提示与溢出正常，并存档 TASK-005-entry-desktop.png、TASK-005-nepg-login-desktop.png、TASK-005-nepm-login-desktop.png、TASK-005-nepv-login-desktop.png。", "在 1366x768 验证三张登录页和三个最小落地页的可见性及可操作性。", "悬停三张入口卡片、登录按钮和返回入口操作，验证预期视觉反馈。", "审计浏览器控制台，验证零 JavaScript 错误。", "本任务按既定范围仅验收 PC 端，不执行 375x812 移动端验收。"],
-    "passes": false
+    "passes": true
   }
 ]
 ```
@@ -87,6 +87,7 @@
 ### Key decision
 
 - 用户于 2026-09-09 选择：NEPV 不新增独立账号表，复用 `admins` 身份来源，并通过 `NEPV_DECISION_MAKER` 角色与 `NEPM_ADMIN` 区分；三端员工均以业务编号与密码登录，NEPG 使用 `gm_code`，NEPM、NEPV 使用 `admin_code`。
+- 2026-09-11：用户确认 TASK-005 已完成人工验收，按验收结果将本任务标记为完成。
 
 ### Approval-sensitive changes
 
