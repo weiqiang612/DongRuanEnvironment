@@ -82,12 +82,15 @@ public interface AqiFeedbackMapper extends BaseMapper<AqiFeedback> {
     SELECT
         aqi.*,
         p.province_name,
-        c.city_name
+        c.city_name,
+        detection.aqi_id AS final_aqi_id
     FROM aqi_feedback aqi
     JOIN grid_province p
         ON aqi.province_id = p.province_id
     JOIN grid_city c
         ON aqi.city_id = c.city_id
+    LEFT JOIN detection_result detection
+        ON detection.feedback_id = aqi.af_id
     WHERE aqi.tel_id = #{telId}
     ORDER BY aqi.submitted_at DESC, aqi.af_id DESC
 """)
@@ -97,14 +100,27 @@ public interface AqiFeedbackMapper extends BaseMapper<AqiFeedback> {
     SELECT
         aqi.*,
         p.province_name,
-        c.city_name
+        c.city_name,
+        detection.aqi_id AS final_aqi_id
     FROM aqi_feedback aqi
     JOIN grid_province p
         ON aqi.province_id = p.province_id
     JOIN grid_city c
         ON aqi.city_id = c.city_id
+    LEFT JOIN detection_result detection
+        ON detection.feedback_id = aqi.af_id
     WHERE aqi.af_id = #{afId}
       AND aqi.tel_id = #{telId}
 """)
     AqiFeedback findByIdAndTelId(@Param("afId") Integer afId, @Param("telId") String telId);
+
+    @Select("""
+    SELECT aqi.*, p.province_name, c.city_name
+    FROM aqi_feedback aqi
+    JOIN grid_province p ON aqi.province_id = p.province_id
+    JOIN grid_city c ON aqi.city_id = c.city_id
+    WHERE aqi.gm_id = #{gmId} AND aqi.state IN (1, 2)
+    ORDER BY CASE aqi.state WHEN 1 THEN 0 ELSE 1 END, aqi.assigned_at DESC, aqi.af_id DESC
+    """)
+    List<AqiFeedback> findForGridMember(@Param("gmId") String gmId);
 }

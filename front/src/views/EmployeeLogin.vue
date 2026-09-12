@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { AxiosError } from 'axios'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { loginEmployee, type EmployeePortal } from '@/api/employeeAuth'
-import { loginNeps } from '@/api/nepsAuth'
+import { loginNeps, registerNeps } from '@/api/nepsAuth'
 import type { ResultVO } from '@/api/aqiFeedback'
 import logo from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_09 PM (1).png'
 import background from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_10 PM (3).png'
@@ -12,12 +12,107 @@ type LoginPortal = EmployeePortal | 'neps'
 
 const props = defineProps<{ portal: LoginPortal }>()
 
+const route = useRoute()
 const router = useRouter()
 const accountCode = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const message = ref('')
+const messageType = ref<'error' | 'success'>('error')
 const submitting = ref(false)
+
+// NEPS 极简注册状态
+const isRegisterMode = ref(route.path.includes('/register'))
+const regPhone = ref('')
+const regPassword = ref('')
+const regConfirmPassword = ref('')
+const regShowPassword = ref(false)
+const regShowConfirmPassword = ref(false)
+const regMessage = ref('')
+const regSubmitting = ref(false)
+
+// 字段失焦校验状态
+const phoneError = ref('')
+const passwordError = ref('')
+const confirmPasswordError = ref('')
+
+function validateRegPhone() {
+  const phone = regPhone.value.trim()
+  if (!phone) {
+    phoneError.value = '请输入手机号'
+    return false
+  }
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    phoneError.value = '请输入有效的11位大陆手机号'
+    return false
+  }
+  phoneError.value = ''
+  return true
+}
+
+function validateRegPassword() {
+  if (!regPassword.value) {
+    passwordError.value = '请输入设置的密码'
+    return false
+  }
+  if (regPassword.value.length < 6) {
+    passwordError.value = '密码长度不能少于6位'
+    return false
+  }
+  if (regPassword.value.length > 32) {
+    passwordError.value = '密码长度不能超过32位'
+    return false
+  }
+  passwordError.value = ''
+  if (regConfirmPassword.value) {
+    if (regConfirmPassword.value !== regPassword.value) {
+      confirmPasswordError.value = '两次输入的密码不一致'
+    } else {
+      confirmPasswordError.value = ''
+    }
+  }
+  return true
+}
+
+function validateRegConfirmPassword() {
+  if (!regConfirmPassword.value) {
+    confirmPasswordError.value = '请再次输入设置的密码'
+    return false
+  }
+  if (regConfirmPassword.value !== regPassword.value) {
+    confirmPasswordError.value = '两次输入的密码不一致'
+    return false
+  }
+  confirmPasswordError.value = ''
+  return true
+}
+
+watch(
+  () => route.path,
+  (newPath) => {
+    isRegisterMode.value = newPath.includes('/register')
+    message.value = ''
+    regMessage.value = ''
+    phoneError.value = ''
+    passwordError.value = ''
+    confirmPasswordError.value = ''
+  }
+)
+
+function toggleRegisterMode() {
+  const nextMode = !isRegisterMode.value
+  isRegisterMode.value = nextMode
+  message.value = ''
+  regMessage.value = ''
+  phoneError.value = ''
+  passwordError.value = ''
+  confirmPasswordError.value = ''
+  regShowPassword.value = false
+  regShowConfirmPassword.value = false
+  if (props.portal === 'neps') {
+    router.push(nextMode ? '/neps/register' : '/neps/login').catch(() => {})
+  }
+}
 
 const portalConfig = {
   neps: {
@@ -42,7 +137,7 @@ const portalConfig = {
     mission: ['让环境更美好', '让巡查更有力量'],
     ecoSlogan: '生态优先 · 绿色发展 · 共建共享',
     accountNote: '网格员账号由系统统一分配',
-    portalPath: '/nepg/portal',
+    portalPath: '/nepg/tasks',
   },
   nepm: {
     code: 'NEPM',
@@ -81,6 +176,7 @@ async function submitLogin() {
   const trimmedAccountCode = accountCode.value.trim()
   if (!trimmedAccountCode || !password.value) {
     message.value = `请输入${config.value.accountLabel}和密码`
+    messageType.value = 'error'
     return
   }
 
@@ -96,15 +192,57 @@ async function submitLogin() {
           })
     if (response.data.code !== 200) {
       message.value = response.data.message || '登录失败，请稍后重试'
+      messageType.value = 'error'
       return
+    }
+    if (props.portal === 'nepg' && response.data.data && typeof response.data.data === 'object' && 'displayName' in response.data.data) {
+      const name = (response.data.data as { displayName?: string }).displayName
+      if (name) localStorage.setItem('nepg_user_name', name)
     }
     password.value = ''
     await router.push(config.value.portalPath)
   } catch (error) {
     const axiosError = error as AxiosError<ResultVO<null>>
-    message.value = axiosError.response?.data.message || '登录失败，请检查网络后重试'
+    message.value = axiosError.response?.data?.message || '登录失败，请检查网络后重试'
+    messageType.value = 'error'
   } finally {
     submitting.value = false
+  }
+}
+
+async function submitRegister() {
+  const isPhoneValid = validateRegPhone()
+  const isPasswordValid = validateRegPassword()
+  const isConfirmValid = validateRegConfirmPassword()
+
+  if (!isPhoneValid || !isPasswordValid || !isConfirmValid) {
+    return
+  }
+
+  const phone = regPhone.value.trim()
+  regSubmitting.value = true
+  regMessage.value = ''
+  try {
+    const res = await registerNeps({ telId: phone, password: regPassword.value })
+    if (res.data.code === 200) {
+      accountCode.value = phone
+      password.value = ''
+      isRegisterMode.value = false
+      regPassword.value = ''
+      regConfirmPassword.value = ''
+      message.value = '账号注册成功，请使用新设置的密码登录！'
+      messageType.value = 'success'
+      if (props.portal === 'neps' && route.path.includes('/register')) {
+        router.push('/neps/login').catch(() => {})
+      }
+    } else {
+      regMessage.value = res.data.message || '注册失败，请稍后重试'
+    }
+  } catch (error) {
+    const axiosError = error as AxiosError<ResultVO<null>>
+    regMessage.value = axiosError.response?.data?.message || '注册失败，请检查网络后重试'
+  } finally {
+    regSubmitting.value = false
   }
 }
 </script>
@@ -141,7 +279,8 @@ async function submitLogin() {
         <p class="eco-slogan">{{ config.ecoSlogan }}</p>
       </aside>
 
-      <form class="login-card" @submit.prevent="submitLogin">
+      <!-- 登录表单 -->
+      <form v-if="!(isRegisterMode && isNeps)" class="login-card" @submit.prevent="submitLogin">
         <button class="return-entry-link" type="button" @click="returnToEntry">← 返回</button>
         <img class="card-logo" :src="logo" alt="" aria-hidden="true" />
         <h1 :id="`${portal}-login-title`">东软环保公众监督系统</h1>
@@ -202,7 +341,9 @@ async function submitLogin() {
           </div>
         </div>
 
-        <p v-if="message" class="form-message" role="alert">{{ message }}</p>
+        <p v-if="message" class="form-message" :class="{ 'is-success': messageType === 'success' }" role="alert">
+          {{ message }}
+        </p>
 
         <button class="submit-button" type="submit" :disabled="submitting" :aria-busy="submitting">
           {{ submitting ? '登录中…' : '登 录' }}
@@ -212,11 +353,122 @@ async function submitLogin() {
           v-if="isNeps"
           class="card-footer-tip register-link"
           type="button"
-          @click="message = '注册功能暂未开放'"
+          @click="toggleRegisterMode"
         >
           {{ config.accountNote }}
         </button>
         <p v-else class="card-footer-tip">{{ config.accountNote }}</p>
+      </form>
+
+      <!-- 注册表单 (仅限公众监督员 NEPS) -->
+      <form v-else class="login-card" @submit.prevent="submitRegister">
+        <button class="return-entry-link" type="button" @click="toggleRegisterMode">← 返回</button>
+        <img class="card-logo" :src="logo" alt="" aria-hidden="true" />
+        <h1 :id="`${portal}-register-title`">东软环保公众监督系统</h1>
+        <h2>{{ config.code }} 监督员注册</h2>
+
+        <div class="card-subtitle-wrap">
+          <span class="sub-line"></span>
+          <span class="card-subtitle">只需手机号即可快速完成注册</span>
+          <span class="sub-line"></span>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-phone">手机号</label>
+          <div class="input-wrap" :class="{ 'has-error': !!phoneError }">
+            <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+              />
+            </svg>
+            <input
+              id="reg-phone"
+              v-model="regPhone"
+              name="regTelId"
+              type="tel"
+              maxlength="11"
+              autocomplete="tel"
+              placeholder="请输入11位手机号"
+              @blur="validateRegPhone"
+              @input="phoneError = ''; regMessage = ''"
+            />
+          </div>
+          <span v-if="phoneError" class="field-error-text">{{ phoneError }}</span>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-password">设置密码</label>
+          <div class="input-wrap" :class="{ 'has-error': !!passwordError }">
+            <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+              />
+            </svg>
+            <input
+              id="reg-password"
+              v-model="regPassword"
+              name="regPassword"
+              :type="regShowPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              placeholder="请设置6-32位密码"
+              @blur="validateRegPassword"
+              @input="passwordError = ''; regMessage = ''"
+            />
+            <button
+              class="password-toggle"
+              type="button"
+              :aria-label="regShowPassword ? '隐藏密码' : '显示密码'"
+              @click="regShowPassword = !regShowPassword"
+            >
+              {{ regShowPassword ? '隐藏' : '显示' }}
+            </button>
+          </div>
+          <span v-if="passwordError" class="field-error-text">{{ passwordError }}</span>
+        </div>
+
+        <div class="field-group">
+          <label for="reg-confirm-password">确认密码</label>
+          <div class="input-wrap" :class="{ 'has-error': !!confirmPasswordError }">
+            <svg class="field-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+              />
+            </svg>
+            <input
+              id="reg-confirm-password"
+              v-model="regConfirmPassword"
+              name="regConfirmPassword"
+              :type="regShowConfirmPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              placeholder="请再次输入设置的密码"
+              @blur="validateRegConfirmPassword"
+              @input="confirmPasswordError = ''; regMessage = ''"
+            />
+            <button
+              class="password-toggle"
+              type="button"
+              :aria-label="regShowConfirmPassword ? '隐藏密码' : '显示密码'"
+              @click="regShowConfirmPassword = !regShowConfirmPassword"
+            >
+              {{ regShowConfirmPassword ? '隐藏' : '显示' }}
+            </button>
+          </div>
+          <span v-if="confirmPasswordError" class="field-error-text">{{ confirmPasswordError }}</span>
+        </div>
+
+        <p v-if="regMessage" class="form-message" role="alert">{{ regMessage }}</p>
+
+        <button class="submit-button" type="submit" :disabled="regSubmitting" :aria-busy="regSubmitting">
+          {{ regSubmitting ? '注册中…' : '立 即 注 册' }}
+        </button>
+
+        <button
+          class="card-footer-tip register-link"
+          type="button"
+          @click="toggleRegisterMode"
+        >
+          已有监督员账号？返回登录
+        </button>
       </form>
     </section>
 
@@ -536,6 +788,29 @@ async function submitLogin() {
   box-shadow: 0 0 0 3px rgb(35 117 201 / 0.14);
 }
 
+.input-wrap.has-error input {
+  border-color: #ef4444;
+  background-color: #fffbfa;
+}
+
+.input-wrap.has-error input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.18);
+}
+
+.input-wrap.has-error .field-svg {
+  color: #ef4444;
+}
+
+.field-error-text {
+  display: block;
+  margin-top: 4px;
+  color: #ef4444;
+  font-size: clamp(11.5px, 1.1vh, 12.5px);
+  text-align: left;
+  line-height: 1.25;
+}
+
 .password-toggle {
   position: absolute;
   right: 8px;
@@ -555,6 +830,11 @@ async function submitLogin() {
   color: #dc2626;
   text-align: left;
   font-size: clamp(12px, 1.1vh, 13px);
+}
+
+.form-message.is-success {
+  color: #16a34a;
+  font-weight: 500;
 }
 
 .submit-button {

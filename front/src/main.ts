@@ -1,5 +1,6 @@
 import './assets/main.css'
 import './styles/nepm-tokens.css'
+import './styles/nepg-tokens.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

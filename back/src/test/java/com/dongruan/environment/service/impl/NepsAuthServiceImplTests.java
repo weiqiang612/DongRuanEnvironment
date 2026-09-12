@@ -75,6 +75,33 @@ class NepsAuthServiceImplTests {
         verify(supervisorMapper, never()).updateById(any(Supervisor.class));
     }
 
+    @Test
+    void registersNewSupervisorWithPbkdf2HashAndDefaultValues() {
+        when(supervisorMapper.selectById("13912345678")).thenReturn(null);
+        when(passwordHasher.hash("securePassword")).thenReturn("pbkdf2$600000$salt$hash");
+
+        service.register(new com.dongruan.environment.dto.NepsRegisterRequest("13912345678", "securePassword"));
+
+        final org.mockito.ArgumentCaptor<Supervisor> captor = org.mockito.ArgumentCaptor.forClass(Supervisor.class);
+        verify(supervisorMapper).insert(captor.capture());
+        final Supervisor inserted = captor.getValue();
+        assertEquals("13912345678", inserted.getTelId());
+        assertEquals("pbkdf2$600000$salt$hash", inserted.getPassword());
+        assertEquals("环保监督员_5678", inserted.getRealName());
+        assertEquals("2000-01-01", inserted.getBirthday());
+        assertEquals(1, inserted.getSex());
+    }
+
+    @Test
+    void rejectsRegisterWhenPhoneAlreadyExists() {
+        when(supervisorMapper.selectById("13800000000")).thenReturn(new Supervisor());
+
+        assertThrows(com.dongruan.environment.auth.SupervisorAlreadyExistsException.class,
+                () -> service.register(new com.dongruan.environment.dto.NepsRegisterRequest("13800000000", "pass1234")));
+
+        verify(supervisorMapper, never()).insert(any(Supervisor.class));
+    }
+
     private Supervisor supervisor(final String password) {
         final Supervisor supervisor = new Supervisor();
         supervisor.setTelId("13800000000");

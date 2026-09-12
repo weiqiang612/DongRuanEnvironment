@@ -16,4 +16,10 @@ public class Supervisor {
     private String password;
 
     private String realName;
+
+    private String birthday;
+
+    private Integer sex;
+
+    private String remarks;
 }

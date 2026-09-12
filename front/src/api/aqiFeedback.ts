@@ -1,9 +1,4 @@
-import axios from 'axios'
-
-const request = axios.create({
-  baseURL: '/api',
-  timeout: 5000,
-})
+import { request } from './http'
 
 export interface ResultVO<T> {
   code: number
@@ -34,6 +29,7 @@ export interface AqiFeedbackRow extends AqiFeedbackPayload {
   assignedAt?: string
   completedAt?: string
   gmId?: string
+  finalAqiId?: number
 }
 
 export function getAqiFeedbackList() {

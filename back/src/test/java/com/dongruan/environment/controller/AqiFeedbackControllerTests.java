@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.dongruan.environment.entity.AqiFeedback;
 import com.dongruan.environment.service.IAqiFeedbackService;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,18 @@ class AqiFeedbackControllerTests {
         mockMvc.perform(get("/aqiFeedback/list"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void returnsFinalAqiOnlyWhenOwnedFeedbackHasDetectionResult() throws Exception {
+        final AqiFeedback feedback = new AqiFeedback();
+        feedback.setAfId(8);
+        feedback.setFinalAqiId(5);
+        when(aqiFeedbackService.findBySupervisorTelId(SUPERVISOR_TEL_ID)).thenReturn(List.of(feedback));
+
+        mockMvc.perform(get("/aqiFeedback/list").sessionAttr(AuthController.SESSION_TEL_ID, SUPERVISOR_TEL_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].finalAqiId").value(5));
     }
 
     @Test

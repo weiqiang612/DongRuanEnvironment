@@ -1,10 +1,5 @@
-import axios from 'axios'
+import { request } from './http'
 import type { ResultVO } from './aqiFeedback'
-
-const request = axios.create({
-  baseURL: '/api',
-  timeout: 5000,
-})
 
 export interface NepsLoginPayload {
   telId: string
@@ -18,6 +13,15 @@ export interface NepsLoginUser {
 
 export function loginNeps(payload: NepsLoginPayload) {
   return request.post<ResultVO<NepsLoginUser>>('auth/neps/login', payload)
+}
+
+export interface NepsRegisterPayload {
+  telId: string
+  password: string
+}
+
+export function registerNeps(payload: NepsRegisterPayload) {
+  return request.post<ResultVO<boolean>>('auth/neps/register', payload)
 }
 
 export function logoutNeps() {

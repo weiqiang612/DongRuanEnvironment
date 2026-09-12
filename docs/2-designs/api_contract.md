@@ -14,10 +14,13 @@
 | GET | `/region/provinces` | 查询省选项 |
 | GET | `/region/cities?provinceId={id}` | 查询市选项 |
 | POST | `/auth/neps/login` | 公众监督员登录 |
+| POST | `/auth/neps/register` | 公众监督员极简自主注册（手机号+密码） |
 | POST | `/auth/neps/logout` | 公众监督员退出登录并销毁当前 Session |
 | POST | `/auth/nepg/login` | 网格员登录 |
 | POST | `/auth/nepm/login` | 系统管理员登录 |
 | POST | `/auth/nepv/login` | 决策者登录 |
+| POST | `/auth/logout` | 通用退出登录并销毁当前 Session |
+| GET | `/auth/session` | 校验当前浏览器 Session 并返回所属端角色与展示名称 |
 
 反馈保存和更新请求使用驼峰字段：`afId`（仅更新必填）、`provinceId`、`cityId`、`address`、`information`、`estimatedGrade`。`telId`、`afDate`、`afTime`、`state`、指派字段、规范时间和超时字段均由服务端维护，反馈表单不得传入或修改。
 
@@ -25,7 +28,7 @@
 
 ### NEPS 反馈归属与生命周期
 
-`/aqiFeedback` 的五个反馈接口均要求 NEPS HTTP Session 中存在 `nepsSupervisorTelId`。未登录时返回 HTTP 401、`code: 401`、`message: "请先登录"`；接口不接受 `telId`、`afDate`、`afTime`、状态或指派字段作为可写请求字段。保存时服务端使用 Session 手机号建立归属并写入当前日期时间；列表与详情只返回该手机号归属的记录。详情不存在或不归属当前公众时统一返回 HTTP 404，避免泄露其他公众的反馈内容。
+`/aqiFeedback` 的五个反馈接口均要求 NEPS HTTP Session 中存在 `nepsSupervisorTelId`。未登录时返回 HTTP 401、`code: 401`、`message: "请先登录"`；接口不接受 `telId`、`afDate`、`afTime`、状态或指派字段作为可写请求字段。保存时服务端使用 Session 手机号建立归属并写入当前日期时间；列表与详情只返回该手机号归属的记录。记录存在关联 `detection_result` 时，列表与详情额外返回只读 `finalAqiId`，供公众端展示网格员提交后的系统最终 AQI；尚未产生检测结果时该字段为 `null`。详情不存在或不归属当前公众时统一返回 HTTP 404，避免泄露其他公众的反馈内容。
 
 更新与删除额外要求记录归属当前公众、`state = 0` 且 `timeoutFlag = false`。不符合条件时返回 HTTP 403、`code: 403`、`message: "该反馈当前不可修改"`，不得改变原记录；前端据此将非待指派或超时反馈作为只读展示。删除接口暂保持 `GET` 以兼容当前前端，后续改为 `DELETE` 必须独立评估。
 
@@ -33,15 +36,19 @@
 
 `POST /auth/neps/login` 请求体为 `{ "telId": "13800000000", "password": "用户输入密码" }`。两项均为必填字符串，前端只通过 HTTPS 或本地开发代理提交，绝不保存密码。
 
-成功时返回 HTTP 200、`code: 200`，`data` 仅含 `telId`、`realName`；服务端创建 HTTP Session，密码与密码哈希不出现在响应中。缺失字段返回 HTTP 400、`code: 400` 和字段错误；手机号不存在或密码错误统一返回 HTTP 401、`code: 401`、`message: "手机号或密码错误"`，`data` 为 `null`。登录接口不提供注册、找回密码、令牌或其他角色认证。
+成功时返回 HTTP 200、`code: 200`，`data` 仅含 `telId`、`realName`；服务端创建 HTTP Session，密码与密码哈希不出现在响应中。缺失字段返回 HTTP 400、`code: 400` 和字段错误；手机号不存在或密码错误统一返回 HTTP 401、`code: 401`、`message: "手机号或密码错误"`，`data` 为 `null`。
 
-`POST /auth/neps/logout` 销毁当前浏览器的 NEPS HTTP Session，成功返回 HTTP 200、`code: 200`、`data: true`。前端退出成功后返回统一登录入口；后续访问反馈接口会按未登录处理。
+`POST /auth/neps/register` 请求体为 `{ "telId": "13800000000", "password": "用户设置密码" }`。两项均为必填项，`telId` 必须符合大陆 11 位手机号正则（`^1[3-9]\d{9}$`），`password` 长度为 6-32 位。服务端自动完成排重校验与 PBKDF2 哈希加密入库，并自动注入脱敏初始属性（如真实姓名 `环保监督员_后4位`、默认生日与性别）。成功时返回 HTTP 200、`code: 200`、`data: true`；参数校验失败返回 HTTP 400；手机号已存在时返回 HTTP 409、`code: 409`、`message: "该手机号已注册"`。
+
+`POST /auth/neps/logout` 与 `POST /auth/logout` 销毁当前浏览器的 HTTP Session，成功均返回 HTTP 200、`code: 200`、`data: true`。前端退出成功后返回登录入口；后续访问受保护业务接口均返回 HTTP 401。
 
 ### 员工端登录
 
 `POST /auth/nepg/login`、`POST /auth/nepm/login`、`POST /auth/nepv/login` 的请求体统一为 `{ "accountCode": "业务编号", "password": "用户输入密码" }`。NEPG 的 `accountCode` 对应 `grid_member.gm_code`；NEPM、NEPV 对应 `admins.admin_code`。两项均为必填字符串，账号最长 20 个字符，前端绝不保存密码。
 
 成功时返回 HTTP 200、`code: 200`，`data` 仅含 `accountCode`、`displayName`、`role`，其中角色分别为 `NEPG_GRID_MEMBER`、`NEPM_ADMIN`、`NEPV_DECISION_MAKER`。服务端仅向 HTTP Session 写入这三项非敏感身份信息。缺失字段返回 HTTP 400；未知账号、错误密码、`admins.role_code` 为空或角色与入口不匹配时统一返回 HTTP 401、`code: 401`、`message: "账号或密码错误"`，不得泄露账号或角色存在性。
+
+`GET /auth/session` 不创建新 Session，仅校验当前浏览器已有 Session。会话有效时返回 HTTP 200、`data.portal`：公众监督员为 `NEPS_SUPERVISOR`，员工端分别为 `NEPG_GRID_MEMBER`、`NEPM_ADMIN`、`NEPV_DECISION_MAKER`；会话不存在、已失效或身份字段不完整时返回 HTTP 401、`code: 401`、`message: "请先登录"`。四端前端路由进入受保护页面前必须调用该接口，并在业务请求返回 401 时跳转到本端登录页。
 
 ### NEPM 管理者工作台与任务调度（TASK-007）
 
@@ -58,6 +65,18 @@
 | GET | `/nepm/analytics/overview` | 可选 `provinceId`、`cityId`、`submittedFrom`、`submittedTo` | 反馈总数及待指派、已指派、已完成、超时数量 | 只基于反馈与调度数据，不返回最终 AQI、检测结果或 AQI 预警统计。 |
 
 `POST /nepm/feedbacks/{afId}/dispatch` 由服务端依据当前反馈和目标人员决定日志动作：`state = 0` 时记录 `ASSIGN`；已指派或已超时且目标人员不同于当前 `gm_id` 时记录 `REASSIGN`；目标人员等于当前 `gm_id` 时记录 `CONTINUE` 且不改变指派事实。服务层在一个事务中完成状态校验、候选可工作性校验、反馈更新和日志写入；前端不传入或覆盖 `adminId`、`operatorId`、`state`、`timeoutFlag`、时间字段或 `actionType`。
+
+### NEPG 网格员任务与实测（TASK-008）
+
+以下接口要求员工 Session 同时具备 `employeeRole = NEPG_GRID_MEMBER` 与非空 `employeeAccountCode`；未登录返回 HTTP 401，角色不符或跨网格员访问返回 HTTP 403。客户端不得传入网格员编号、最终等级、污染物等级、状态、检测时间、完成时间或预警事实。
+
+| 方法 | 后端路径 | 请求 | 成功 `data` | 失败边界 |
+|---|---|---|---|---|
+| GET | `/nepg/tasks` | 无 | 本人 `state = 1/2` 任务列表，含地区、地址、描述、公众预估等级、状态、超时和派发/完成时间 | 仅返回当前 Session 解析的网格员任务。 |
+| GET | `/nepg/tasks/{afId}` | 路径 `afId` | 任务详情；已完成时额外含最终等级、三项实测值、检测时间及预警是否生成 | 不存在为 404；非本人为 403。 |
+| POST | `/nepg/tasks/{afId}/measurements` | `{ "so2Value": number, "coValue": number, "spmValue": number }` | 已完成任务详情 | 负数、精度不合法或无法唯一匹配 AQI 区间为 400；已完成、未指派或竞争失败为 409。 |
+
+提交接口只接受上述三个 JSON 字段；服务端在事务中完成字典校验、最终 AQI 计算、`detection_result` 插入、`aqi_feedback.state = 2` 与 `completed_at` 更新，以及等级 4 至 6 的 `alert_record` 插入。超时标识只读保留，不因提交被覆盖。
 
 ## 目标契约原则
 

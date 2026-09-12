@@ -11,6 +11,9 @@ import com.dongruan.environment.service.INepsAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.dongruan.environment.auth.SupervisorAlreadyExistsException;
+import com.dongruan.environment.dto.NepsRegisterRequest;
+
 @Service
 @RequiredArgsConstructor
 public class NepsAuthServiceImpl implements INepsAuthService {
@@ -30,5 +33,26 @@ public class NepsAuthServiceImpl implements INepsAuthService {
             supervisorMapper.updateById(supervisor);
         }
         return new NepsLoginResponse(supervisor.getTelId(), supervisor.getRealName());
+    }
+
+    @Override
+    public void register(final NepsRegisterRequest request) {
+        final Supervisor existing = supervisorMapper.selectById(request.telId());
+        if (existing != null) {
+            throw new SupervisorAlreadyExistsException();
+        }
+        final Supervisor supervisor = new Supervisor();
+        supervisor.setTelId(request.telId());
+        supervisor.setPassword(passwordHasher.hash(request.password()));
+
+        final String suffix = request.telId().length() >= 4
+                ? request.telId().substring(request.telId().length() - 4)
+                : request.telId();
+        supervisor.setRealName("环保监督员_" + suffix);
+        supervisor.setBirthday("2000-01-01");
+        supervisor.setSex(1);
+        supervisor.setRemarks("自主注册账号");
+
+        supervisorMapper.insert(supervisor);
     }
 }

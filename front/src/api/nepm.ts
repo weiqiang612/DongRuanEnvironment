@@ -1,7 +1,5 @@
-import axios from 'axios'
+import { request } from './http'
 import type { AqiFeedbackRow, ResultVO } from './aqiFeedback'
-
-const request = axios.create({ baseURL: '/api', timeout: 5000 })
 
 export interface DashboardSummary { pending: number; assigned: number; completed: number; timeout: number }
 export interface GridMember { gmId: string; gmName: string; provinceId: number; cityId: number; cityName: string; sourceLevel: 'SAME_CITY' | 'SAME_PROVINCE' }

@@ -117,4 +117,7 @@ public class AqiFeedback implements Serializable {
 
     @TableField(exist = false)
     private String gmName;
+
+    @TableField(exist = false)
+    private Integer finalAqiId;
 }

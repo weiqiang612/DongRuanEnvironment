@@ -26,6 +26,8 @@ NEPS / NEPG / NEPM / NEPV
 
 TASK-007 的 NEPM 调度层复用 `aqi_feedback` 作为任务主表、`grid_member` 作为候选人员来源、`admins` 作为操作人来源和 `task_assign_log` 作为追溯记录。管理端 Controller 在每个入口校验员工 Session 中的 `employeeRole = NEPM_ADMIN` 与 `employeeAccountCode`，服务层再解析实际 `admin_id`；首次指派、重派和继续处理在同一事务中校验反馈状态、候选网格员可工作性并写入日志。候选查询只使用本地 `grid_member.state = 0`，按同城优先、同省其他城市兜底，不在事务中调用东软 HR。
 
+TASK-008 的 NEPG 任务层从员工 Session 读取 `employeeRole = NEPG_GRID_MEMBER` 与 `employeeAccountCode`，服务层解析实际 `grid_member.gm_id`，浏览器不传递网格员身份或最终事实。查询仅返回该网格员 `state in (1, 2)` 的任务；提交在同一事务内完成 AQI 字典校验、`detection_result` 插入、任务完成与等级 4 至 6 的 `alert_record` 写入。唯一索引与状态条件共同抵御重复提交，异常时不遗留半完成数据。
+
 ## 设计约束
 
 - 依赖方向固定为“前端 → 服务层 → 数据访问层或外部接口”，禁止跨层直接访问。

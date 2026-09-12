@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { SwitchButton } from '@element-plus/icons-vue'
+import { logoutSession } from '@/api/session'
 
 import NepmDispatchModal from '@/components/nepm/NepmDispatchModal.vue'
 import NepmHeader from '@/components/nepm/NepmHeader.vue'
@@ -20,6 +22,8 @@ const router = useRouter()
 const active = ref('dashboard')
 
 const dispatchModalVisible = ref(false)
+const confirmLogoutVisible = ref(false)
+const loggingOut = ref(false)
 const contentRevision = ref(0)
 const selectedFeedbackId = ref<number | null>(null)
 interface DispatchTask {
@@ -81,11 +85,32 @@ function openDetail(row: { id: number }) {
 function onTaskDispatched() {
   contentRevision.value += 1
 }
+
+function openLogoutConfirm() {
+  confirmLogoutVisible.value = true
+}
+
+function closeLogoutConfirm() {
+  confirmLogoutVisible.value = false
+}
+
+async function handleConfirmLogout() {
+  loggingOut.value = true
+  try {
+    await logoutSession()
+  } catch {
+    // 忽略异常
+  } finally {
+    confirmLogoutVisible.value = false
+    loggingOut.value = false
+    router.push('/nepm/login')
+  }
+}
 </script>
 
 <template>
   <div class="nepm-page">
-    <NepmHeader @logout="router.push('/')" />
+    <NepmHeader @logout="openLogoutConfirm" />
 
     <div class="shell">
       <NepmSidebar :active="active" @change="handleMenuChange" />
@@ -93,8 +118,14 @@ function onTaskDispatched() {
       <main id="main-content" class="main-content">
         <!-- 页面主标题与副标题 -->
         <div v-if="active !== 'feedbackDetail'" class="page-heading">
-          <h1 class="heading-title">{{ pageHeader.title }}</h1>
-          <p class="heading-subtitle">{{ pageHeader.subtitle }}</p>
+          <div class="heading-left">
+            <h1 class="heading-title">{{ pageHeader.title }}</h1>
+            <p class="heading-subtitle">{{ pageHeader.subtitle }}</p>
+          </div>
+          <button type="button" class="heading-logout-btn" @click="openLogoutConfirm">
+            <el-icon class="btn-icon"><SwitchButton /></el-icon>
+            <span>退出登录</span>
+          </button>
         </div>
 
         <!-- 7 个高质量业务子视图切换 -->
@@ -131,6 +162,7 @@ function onTaskDispatched() {
         <NepmResultsView
           v-else-if="active === 'results'"
           @open-detail="active = 'feedbackDetail'"
+          @open-dispatch="onOpenDispatch"
         />
 
         <NepmTimeoutView
@@ -152,6 +184,34 @@ function onTaskDispatched() {
       :task-data="currentDispatchTask"
       @dispatched="onTaskDispatched"
     />
+
+    <!-- 管理员退出系统二次确认弹窗 -->
+    <Teleport to="body">
+      <div v-if="confirmLogoutVisible" class="nepm-modal-backdrop" @click="closeLogoutConfirm">
+        <div class="nepm-modal-box" role="dialog" aria-modal="true" @click.stop>
+          <div class="nepm-modal-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h3 class="nepm-modal-title">退出系统确认</h3>
+          <p class="nepm-modal-desc">确定要退出系统管理端吗？退出后需重新登录。</p>
+          <div class="nepm-modal-actions">
+            <button type="button" class="btn-modal-cancel" @click="closeLogoutConfirm">取消</button>
+            <button
+              type="button"
+              class="btn-modal-confirm"
+              :disabled="loggingOut"
+              @click="handleConfirmLogout"
+            >
+              {{ loggingOut ? '退出中…' : '确认退出' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -181,6 +241,9 @@ function onTaskDispatched() {
 
 .page-heading {
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .heading-title {
@@ -195,6 +258,137 @@ function onTaskDispatched() {
   margin: 0;
   font-size: 13.5px;
   color: #64748b;
+}
+
+.heading-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.heading-logout-btn .btn-icon {
+  font-size: 16px;
+}
+
+.heading-logout-btn:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
+}
+
+.heading-logout-btn:active {
+  transform: translateY(0);
+}
+
+/* 管理端退出弹窗 */
+.nepm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.nepm-modal-box {
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  animation: modalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nepm-modal-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.nepm-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.nepm-modal-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.nepm-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-modal-cancel,
+.btn-modal-confirm {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-cancel {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+.btn-modal-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-modal-confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+}
+.btn-modal-confirm:hover {
+  background: #b91c1c;
+}
+.btn-modal-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 @media (max-width: 900px) {

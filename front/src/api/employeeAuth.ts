@@ -1,10 +1,5 @@
-import axios from 'axios'
+import { request } from './http'
 import type { ResultVO } from './aqiFeedback'
-
-const request = axios.create({
-  baseURL: '/api',
-  timeout: 5000,
-})
 
 export type EmployeePortal = 'nepg' | 'nepm' | 'nepv'
 

@@ -68,7 +68,7 @@
                   <div class="profile-role">NEPS 环保监督员账号</div>
                 </div>
                 <div class="dropdown-divider"></div>
-                <button class="logout-item" type="button" role="menuitem" @click="logout">
+                <button class="logout-item" type="button" role="menuitem" @click="openLogoutModal">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -333,6 +333,11 @@
                 </tr>
               </thead>
               <tbody>
+                <tr v-if="feedbackLoading || feedbackError || recentFeedbackList.length === 0">
+                  <td colspan="7" class="text-center empty-cell">
+                    {{ feedbackLoading ? '正在加载真实反馈记录…' : feedbackError || '暂无反馈记录' }}
+                  </td>
+                </tr>
                 <tr v-for="(item, index) in recentFeedbackList" :key="item.id">
                   <td class="text-center">{{ index + 1 }}</td>
                   <td class="address-col">{{ item.address }}</td>
@@ -557,6 +562,11 @@
                 </tr>
               </thead>
               <tbody>
+                <tr v-if="feedbackLoading || feedbackError || recentFeedbackList.length === 0">
+                  <td colspan="7" class="text-center empty-cell">
+                    {{ feedbackLoading ? '正在加载真实反馈记录…' : feedbackError || '暂无反馈记录' }}
+                  </td>
+                </tr>
                 <tr v-for="(item, index) in recentFeedbackList" :key="item.id">
                   <td class="text-center">{{ index + 1 }}</td>
                   <td class="address-col">{{ item.address }}</td>
@@ -654,12 +664,44 @@
         </div>
       </div>
     </footer>
+
+    <!-- 退出登录二次确认弹窗 -->
+    <Teleport to="body">
+      <div v-if="confirmLogoutVisible" class="neps-modal-backdrop" @click="closeLogoutModal">
+        <div class="neps-modal-box" role="dialog" aria-modal="true" @click.stop>
+          <div class="neps-modal-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h3 class="neps-modal-title">退出登录确认</h3>
+          <p class="neps-modal-desc">确定要退出公众监督员端吗？退出后需重新登录。</p>
+          <div class="neps-modal-actions">
+            <button type="button" class="btn-modal-cancel" @click="closeLogoutModal">取消</button>
+            <button
+              type="button"
+              class="btn-modal-confirm"
+              :disabled="loggingOut"
+              @click="handleConfirmLogout"
+            >
+              {{ loggingOut ? '退出中…' : '确认退出' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import type { AxiosError } from 'axios'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getAqiFeedbackList, saveAqiFeedback, type AqiFeedbackRow } from '@/api/aqiFeedback'
+import { getCityOptions, getProvinceOptions, type RegionOption } from '@/api/region'
+import { logoutSession } from '@/api/session'
 import logo from '@/assets/ChatGPT Image Sep 8, 2026, 04_32_09 PM (1).png'
 
 type PageName = 'home' | 'submit' | 'mine'
@@ -697,40 +739,18 @@ const messageType = ref<'success' | 'error'>('success')
 const accountMenuOpen = ref(false)
 const accountMenuRef = ref<HTMLElement | null>(null)
 
-// 静态省份与城市 Mock 数据
-const provinceOptions = [
-  { id: 110000, name: '北京市' },
-  { id: 130000, name: '河北省' },
-  { id: 320000, name: '江苏省' },
-  { id: 330000, name: '浙江省' },
-  { id: 370000, name: '山东省' },
-]
+const provinceOptions = ref<RegionOption[]>([])
+const cityOptions = ref<RegionOption[]>([])
 
-const cityMap: Record<number, Array<{ id: number; name: string }>> = {
-  110000: [{ id: 110100, name: '北京市' }],
-  130000: [
-    { id: 130100, name: '石家庄市' },
-    { id: 130200, name: '唐山市' },
-  ],
-  320000: [
-    { id: 320100, name: '南京市' },
-    { id: 320500, name: '苏州市' },
-  ],
-  330000: [
-    { id: 330100, name: '杭州市' },
-    { id: 330200, name: '宁波市' },
-  ],
-  370000: [
-    { id: 370100, name: '济南市' },
-    { id: 370200, name: '青岛市' },
-  ],
-}
-
-const cityOptions = ref<Array<{ id: number; name: string }>>([])
-
-function handleProvinceChange() {
+async function handleProvinceChange() {
   form.value.cityId = null
-  cityOptions.value = (form.value.provinceId ? cityMap[form.value.provinceId] : null) || []
+  cityOptions.value = []
+  if (!form.value.provinceId) return
+  try {
+    cityOptions.value = (await getCityOptions(form.value.provinceId)).data.data
+  } catch {
+    showToast('城市选项加载失败，请稍后重试', 'error')
+  }
 }
 
 // 预估 AQI 6级标准选项
@@ -743,14 +763,12 @@ const gradeOptions = [
   { value: 6, label: '严重污染' },
 ]
 
-// 首页概况统计指标 (对齐截图：总数 8、待指派 2、已完成 3)
 const summary = ref({
-  total: 8,
-  pending: 2,
-  completed: 3,
+  total: 0,
+  pending: 0,
+  completed: 0,
 })
 
-// 底部“我的反馈”最近 5 条真实参照 Mock 数据 (100% 对齐截图 2)
 interface FeedbackRecordItem {
   id: number
   address: string
@@ -764,68 +782,48 @@ interface FeedbackRecordItem {
   desc: string
 }
 
-const recentFeedbackList = ref<FeedbackRecordItem[]>([
-  {
-    id: 1,
-    address: '朝阳区建国路88号附近',
-    time: '2024-11-20 14:32',
-    statusText: '待指派',
-    statusClass: 'status-pending',
-    estimateGradeText: '轻度污染',
-    estimateGradeClass: 'grade-3',
-    finalAqiText: '-',
-    finalAqiClass: '',
-    desc: '现场有明显施工扬尘与异味，周边空气能见度较差。',
-  },
-  {
-    id: 2,
-    address: '长安区中山东路与建设大街交叉口',
-    time: '2024-11-20 13:21',
-    statusText: '已指派',
-    statusClass: 'status-assigned',
-    estimateGradeText: '中度污染',
-    estimateGradeClass: 'grade-4',
-    finalAqiText: '良',
-    finalAqiClass: 'grade-2',
-    desc: '十字路口车辆拥堵排气较重，伴有刺鼻气味。',
-  },
-  {
-    id: 3,
-    address: '鼓楼区中央路302号附近',
-    time: '2024-11-20 11:03',
-    statusText: '已完成',
-    statusClass: 'status-complete',
-    estimateGradeText: '轻度污染',
-    estimateGradeClass: 'grade-3',
-    finalAqiText: '良',
-    finalAqiClass: 'grade-2',
-    desc: '周边餐饮商户油烟管道排放异常，已整改完毕。',
-  },
-  {
-    id: 4,
-    address: '西湖区文三西路与古墩路交叉口',
-    time: '2024-11-20 09:18',
-    statusText: '已超时',
-    statusClass: 'status-timeout',
-    estimateGradeText: '重度污染',
-    estimateGradeClass: 'grade-5',
-    finalAqiText: '-',
-    finalAqiClass: '',
-    desc: '河道沿岸有不明深色污水及刺鼻恶臭散发，未在时限内核实。',
-  },
-  {
-    id: 5,
-    address: '历下区经十路118号附近',
-    time: '2024-11-19 18:45',
-    statusText: '已完成',
-    statusClass: 'status-complete',
-    estimateGradeText: '良',
-    estimateGradeClass: 'grade-2',
-    finalAqiText: '良',
-    finalAqiClass: 'grade-2',
-    desc: '园区绿化工程树叶焚烧烟雾，经巡查人员现场扑灭。',
-  },
-])
+const recentFeedbackList = ref<FeedbackRecordItem[]>([])
+const feedbackLoading = ref(false)
+const feedbackError = ref('')
+
+const gradeNames = ['', '优', '良', '轻度污染', '中度污染', '重度污染', '严重污染']
+function formatTime(row: AqiFeedbackRow) {
+  const value = row.submittedAt || (row.afDate && row.afTime ? `${row.afDate} ${row.afTime}` : '')
+  return value ? value.replace('T', ' ').slice(0, 16) : '—'
+}
+function toRecord(row: AqiFeedbackRow): FeedbackRecordItem {
+  const timeout = Boolean(row.timeoutFlag)
+  const state = row.state ?? 0
+  return {
+    id: row.afId,
+    address: row.address,
+    time: formatTime(row),
+    statusText: timeout ? '已超时' : ['待指派', '已指派', '已完成'][state] || '—',
+    statusClass: timeout ? 'status-timeout' : ['status-pending', 'status-assigned', 'status-complete'][state] || '',
+    estimateGradeText: gradeNames[row.estimatedGrade ?? 0] || '—',
+    estimateGradeClass: `grade-${row.estimatedGrade ?? 0}`,
+    finalAqiText: gradeNames[row.finalAqiId ?? 0] || '-',
+    finalAqiClass: row.finalAqiId ? `grade-${row.finalAqiId}` : '',
+    desc: row.information,
+  }
+}
+async function loadFeedbacks() {
+  feedbackLoading.value = true
+  feedbackError.value = ''
+  try {
+    const rows = (await getAqiFeedbackList()).data.data
+    recentFeedbackList.value = rows.map(toRecord)
+    summary.value = {
+      total: rows.length,
+      pending: rows.filter((item) => item.state === 0).length,
+      completed: rows.filter((item) => item.state === 2).length,
+    }
+  } catch (error) {
+    feedbackError.value = (error as AxiosError<{ message?: string }>).response?.data?.message || '反馈记录加载失败，请稍后重试'
+  } finally {
+    feedbackLoading.value = false
+  }
+}
 
 // 详情弹窗
 const selectedDetail = ref<FeedbackRecordItem | null>(null)
@@ -837,6 +835,7 @@ function viewDetail(item: FeedbackRecordItem) {
 function switchPage(page: PageName) {
   activePage.value = page
   accountMenuOpen.value = false
+  if (page === 'mine') void loadFeedbacks()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -851,8 +850,7 @@ function showToast(text: string, type: 'success' | 'error' = 'success') {
   }, 3500)
 }
 
-// 表单提交模拟
-function submitForm() {
+async function submitForm() {
   if (!form.value.provinceId || !form.value.cityId) {
     showToast('请选择省份和城市', 'error')
     return
@@ -871,21 +869,58 @@ function submitForm() {
   }
 
   submitting.value = true
-  setTimeout(() => {
-    submitting.value = false
+  try {
+    const response = await saveAqiFeedback(form.value)
+    if (response.data.code !== 200) throw new Error(response.data.message)
     showToast('反馈已提交成功，感谢您的参与！', 'success')
-    // 重置表单
     form.value.address = ''
     form.value.estimatedGrade = null
     form.value.information = ''
-  }, 500)
+    await loadFeedbacks()
+    activePage.value = 'mine'
+  } catch (error) {
+    showToast((error as AxiosError<{ message?: string }>).response?.data?.message || '提交失败，请稍后重试', 'error')
+  } finally {
+    submitting.value = false
+  }
 }
 
-// 退出登录：纯前端安全平滑跳转
-function logout() {
+onMounted(async () => {
+  try {
+    provinceOptions.value = (await getProvinceOptions()).data.data
+  } catch {
+    showToast('省份选项加载失败，请刷新后重试', 'error')
+  }
+  await loadFeedbacks()
+})
+
+// 退出登录：二次确认模态弹窗
+const confirmLogoutVisible = ref(false)
+const loggingOut = ref(false)
+
+function openLogoutModal() {
   accountMenuOpen.value = false
-  void router.replace('/')
+  confirmLogoutVisible.value = true
 }
+
+function closeLogoutModal() {
+  confirmLogoutVisible.value = false
+}
+
+async function handleConfirmLogout() {
+  loggingOut.value = true
+  try {
+    await logoutSession()
+  } catch {
+    // 忽略异常
+  } finally {
+    confirmLogoutVisible.value = false
+    loggingOut.value = false
+    void router.replace('/')
+  }
+}
+
+
 
 function handleGlobalClick(event: MouseEvent) {
   if (accountMenuRef.value && !accountMenuRef.value.contains(event.target as Node)) {
@@ -1677,6 +1712,11 @@ function handleGlobalClick(event: MouseEvent) {
   background: #f8fbfe;
 }
 
+.empty-cell {
+  padding: 28px !important;
+  color: var(--text-secondary) !important;
+}
+
 .text-center { text-align: center; }
 
 .address-col {
@@ -2096,5 +2136,103 @@ function handleGlobalClick(event: MouseEvent) {
     gap: 6px;
     text-align: center;
   }
+}
+
+/* 退出登录二次确认弹窗样式 */
+.neps-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.neps-modal-box {
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  animation: modalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neps-modal-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.neps-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.neps-modal-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.neps-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-modal-cancel,
+.btn-modal-confirm {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-cancel {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+.btn-modal-cancel:hover {
+  background: #e2e8f0;
+}
+
+.btn-modal-confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+}
+.btn-modal-confirm:hover {
+  background: #b91c1c;
+}
+.btn-modal-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 </style>

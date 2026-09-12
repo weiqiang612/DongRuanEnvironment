@@ -3,6 +3,7 @@ package com.dongruan.environment.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -82,5 +83,30 @@ class NepsAuthControllerTests {
                 .andExpect(jsonPath("$.data").value(true));
 
         org.junit.jupiter.api.Assertions.assertTrue(session.isInvalid());
+    }
+
+    @Test
+    void rejectsSessionStatusWhenNoSessionExists() throws Exception {
+        mockMvc.perform(get("/auth/session"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void returnsCurrentPortalForSupervisorAndEmployeeSessions() throws Exception {
+        final MockHttpSession supervisorSession = new MockHttpSession();
+        supervisorSession.setAttribute(AuthController.SESSION_TEL_ID, "13800000000");
+
+        mockMvc.perform(get("/auth/session").session(supervisorSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.portal").value("NEPS_SUPERVISOR"));
+
+        final MockHttpSession employeeSession = new MockHttpSession();
+        employeeSession.setAttribute(AuthController.SESSION_EMPLOYEE_ROLE, "NEPG_GRID_MEMBER");
+        employeeSession.setAttribute(AuthController.SESSION_EMPLOYEE_ACCOUNT_CODE, "GM001");
+
+        mockMvc.perform(get("/auth/session").session(employeeSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.portal").value("NEPG_GRID_MEMBER"));
     }
 }
