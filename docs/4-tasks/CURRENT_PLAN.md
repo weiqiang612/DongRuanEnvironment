@@ -44,6 +44,7 @@ None (TASK-008 has completed)
 - TASK-001 数据库迁移与反馈检测闭环（2026-09-08）：已备份本地数据库，执行 `V20260908_001`、`V20260908_002`、`V20260908_003`，将空 `statistics` 重构为 `detection_result`，移除全部物理外键并修复中文注释，兼容旧反馈插入；后端测试通过。
 
 ## Notes for next session
-
+ 
 <!-- 记录下一次会话所需的上下文与验证结果。 -->
-- 后续开发顺序与依赖见 `docs/4-tasks/DEVELOPMENT_ROADMAP.md`；下一步为 TASK-008，先创建网格员端任务列表、实测提交与服务端 AQI 计算的任务规格与实施计划。
+- TASK-008 网格员实测闭环与公众监督员极简注册功能已全面完成并经验收与代码审查；
+- 下一步开发任务为 **TASK-009 管理者端检测处置与运营统计**，开发前先创建 `docs/4-tasks/features/TASK-009-nepm-detection/` 下的 `spec.md` 与 `tasks.md`。
