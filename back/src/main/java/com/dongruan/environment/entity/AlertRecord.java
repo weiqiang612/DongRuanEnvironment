@@ -11,6 +11,9 @@ import lombok.Setter;
 @Setter
 @TableName("alert_record")
 public class AlertRecord {
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_HANDLED = "HANDLED";
+
     @TableId(type = IdType.AUTO)
     private Long id;
     private Integer feedbackId;

@@ -80,12 +80,12 @@ async function onProvinceChange() {
 
 function getAqiClass(aqi?: string) {
   const map: Record<string, string> = {
-    优: 'aqi-tag--excellent',
-    良: 'aqi-tag--good',
-    轻度污染: 'aqi-tag--light',
-    中度污染: 'aqi-tag--medium',
-    重度污染: 'aqi-tag--heavy',
-    严重污染: 'aqi-tag--severe',
+    优: 'aqi-grade-1',
+    良: 'aqi-grade-2',
+    轻度污染: 'aqi-grade-3',
+    中度污染: 'aqi-grade-4',
+    重度污染: 'aqi-grade-5',
+    严重污染: 'aqi-grade-6',
   }
   return aqi && map[aqi] ? map[aqi] : ''
 }
@@ -284,13 +284,6 @@ onMounted(() => {
 .state-pill--处理中 { background: #f0f7ff; color: #0284c7; border: 1px solid #bae6fd; }
 .state-pill--已完成 { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
 .state-pill--已超时 { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
-.aqi-pill { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-.aqi-tag--excellent { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
-.aqi-tag--good { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
-.aqi-tag--light { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
-.aqi-tag--medium { background: #fff1f0; color: #e11d48; border: 1px solid #fecdd3; }
-.aqi-tag--heavy { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-.aqi-tag--severe { background: #faf5ff; color: #9333ea; border: 1px solid #e9d5ff; }
 .op-split { margin: 0 6px; color: #cbd5e1; }
 .pagination-bar {
   display: flex; align-items: center; justify-content: space-between;

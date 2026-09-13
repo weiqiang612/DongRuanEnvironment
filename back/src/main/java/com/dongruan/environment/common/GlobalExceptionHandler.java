@@ -48,4 +48,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ResultVO<>(400, "请求参数不合法", null));
     }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ResultVO<Void>> handleConstraintViolation(
+            final jakarta.validation.ConstraintViolationException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ResultVO<>(400, "请求参数不合法", null));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<ResultVO<Void>> handleHandlerMethodValidation(
+            final org.springframework.web.method.annotation.HandlerMethodValidationException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ResultVO<>(400, "请求参数不合法", null));
+    }
 }

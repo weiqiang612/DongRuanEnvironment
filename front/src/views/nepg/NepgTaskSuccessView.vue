@@ -18,11 +18,8 @@ const gradeName = (grade: number | null) =>
   ['优', '良', '轻度污染', '中度污染', '重度污染', '严重污染'][(grade || 0) - 1] || '—'
 
 const gradeBadgeClass = (grade: number | null) => {
-  if (!grade) return 'grade-good'
-  if (grade <= 2) return 'grade-good'
-  if (grade === 3) return 'grade-moderate'
-  if (grade === 4) return 'grade-orange'
-  return 'grade-heavy'
+  if (!grade) return 'aqi-grade-1'
+  return `aqi-grade-${grade}`
 }
 
 async function loadTaskResult() {
@@ -300,25 +297,6 @@ onMounted(() => {
   line-height: 1.3;
 }
 
-.grade-good {
-  color: #16a34a;
-  background: #dcfce7;
-}
-
-.grade-moderate {
-  color: #ca8a04;
-  background: #fef9c3;
-}
-
-.grade-orange {
-  color: #ea580c;
-  background: #ffedd5;
-}
-
-.grade-heavy {
-  color: #dc2626;
-  background: #fee2e2;
-}
 
 /* 操作按钮 */
 .action-buttons {

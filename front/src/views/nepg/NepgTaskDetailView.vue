@@ -25,11 +25,8 @@ const gradeName = (grade: number | null) =>
   ['优', '良', '轻度污染', '中度污染', '重度污染', '严重污染'][(grade || 0) - 1] || '—'
 
 const gradeBadgeClass = (grade: number | null) => {
-  if (!grade) return 'badge-good'
-  if (grade <= 2) return 'badge-good'
-  if (grade === 3) return 'badge-mod'
-  if (grade === 4) return 'badge-orange'
-  return 'badge-danger'
+  if (!grade) return 'aqi-grade-1'
+  return `aqi-grade-${grade}`
 }
 
 async function loadTask() {
@@ -157,8 +154,7 @@ onMounted(loadTask)
               <div class="detail-row">
                 <span class="label">公众预估等级</span>
                 <div class="val grade-row">
-                  <span>{{ task.estimatedGrade }}级</span>
-                  <span class="badge-orange">{{ gradeName(task.estimatedGrade) }}</span>
+                  <span :class="['aqi-pill', `aqi-grade-${task.estimatedGrade}`]">{{ gradeName(task.estimatedGrade) }}（{{ task.estimatedGrade }}级）</span>
                 </div>
               </div>
               <div class="detail-row">
@@ -209,8 +205,7 @@ onMounted(loadTask)
               <div class="mini-row">
                 <span class="label">公众预估等级</span>
                 <div class="val grade-row">
-                  <span class="badge-green">{{ task.estimatedGrade }}级</span>
-                  <span class="badge-orange">{{ gradeName(task.estimatedGrade) }}</span>
+                  <span :class="['aqi-pill', `aqi-grade-${task.estimatedGrade}`]">{{ gradeName(task.estimatedGrade) }}（{{ task.estimatedGrade }}级）</span>
                 </div>
               </div>
             </div>
@@ -552,39 +547,6 @@ onMounted(loadTask)
   gap: 6px;
 }
 
-/* 徽章样式 */
-.badge-good, .m-badge.badge-good {
-  color: #16a34a;
-  background: #dcfce7;
-}
-
-.badge-green {
-  color: #16a34a;
-  background: #dcfce7;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-mod, .m-badge.badge-mod {
-  color: #ca8a04;
-  background: #fef9c3;
-}
-
-.badge-orange, .m-badge.badge-orange {
-  color: #c2410c;
-  background: #ffedd5;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-danger, .m-badge.badge-danger {
-  color: #dc2626;
-  background: #fee2e2;
-}
 
 /* 提示横幅 */
 .info-banner {

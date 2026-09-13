@@ -105,6 +105,14 @@ public class NepmDispatchController {
         }
     }
 
+    @GetMapping("/analytics/recent-trend")
+    public ResponseEntity<ResultVO<?>> recentTrend(final HttpSession session) {
+        if (!hasAdminRole(session)) {
+            return forbidden(session);
+        }
+        return ResponseEntity.ok(new ResultVO<>(200, "查询成功", dispatchService.recentTrend()));
+    }
+
     @GetMapping("/feedbacks/{feedbackId}")
     public ResponseEntity<ResultVO<?>> feedback(@PathVariable @NotNull final Integer feedbackId, final HttpSession session) {
         if (!hasAdminRole(session)) {

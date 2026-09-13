@@ -28,6 +28,14 @@ TASK-007 的 NEPM 调度层复用 `aqi_feedback` 作为任务主表、`grid_memb
 
 TASK-008 的 NEPG 任务层从员工 Session 读取 `employeeRole = NEPG_GRID_MEMBER` 与 `employeeAccountCode`，服务层解析实际 `grid_member.gm_id`，浏览器不传递网格员身份或最终事实。查询仅返回该网格员 `state in (1, 2)` 的任务；提交在同一事务内完成 AQI 字典校验、`detection_result` 插入、任务完成与等级 4 至 6 的 `alert_record` 写入。唯一索引与状态条件共同抵御重复提交，异常时不遗留半完成数据。
 
+TASK-009 的 NEPM 检测处置与运营统计层构建在 TASK-007 与 TASK-008 产生的数据基石之上，所有入口统一校验 Session 中的 `employeeRole = NEPM_ADMIN` 与非空 `employeeAccountCode`：
+1. **检测结果只读查询链路**：服务层联合 `detection_result`、`aqi_feedback`、`grid_province`、`grid_city` 及 `grid_member` 进行多表只读投影，返回完整的三项实测数据、分项等级、系统最终 AQI 等级及关联网格员与反馈信息，不提供任何写操作通道，确保检测结果的客观只读性。
+2. **AQI 预警原子条件更新机制**：对于 4~6 级高等级预警（`alert_record`），查询端点支持按状态（`PENDING`/`HANDLED`）与省市过滤；处置操作执行数据库级原子条件更新（`UPDATE alert_record SET alert_status = 'HANDLED', handled_at = ? WHERE id = ? AND alert_status = 'PENDING'`），受影响行数不为 1 时视为已被其他管理员处置或状态不符，由服务层抛出状态冲突异常并映射为 HTTP 409，杜绝并发竞争与重复处置，且处置请求无需前端传递额外业务字段，处置时间严格以服务端当前时间为准。
+3. **超时任务调度复用机制**：超时任务的处置与重派完全复用 TASK-007 既有的调度机制（`POST /nepm/feedbacks/{afId}/dispatch`），支持对超时任务重新指派同城或同省备选网格员，由调度事务同步更新任务归属并落库 `task_assign_log` 审计日志，保证调度链路单一真实来源与逻辑复用。
+4. **综合运营统计聚合链路**：直接复用 `detection_result`、`aqi_feedback` 和 `alert_record`，以只读 SQL 聚合方式动态统计完成检测总量、1~6 级 AQI 等级分布、月度趋势、高等级预警状态汇总（总数、待处置、已处置），无需新增任何表结构或维护异步汇总表，保证口径严密且与事务数据强一致。
+5. **近期运营趋势链路**：管理端首页按 `submitted_at` 统计每日新增反馈，按 `completed_at` 统计每日办结反馈，并以“截至当日结束已提交但尚未完成”的存量计算日终待处理数。三项均为真实业务事实；不得用办结数除以新增数伪造办结率，不得补造零值样本或截断统计值。
+
+
 ## 设计约束
 
 - 依赖方向固定为“前端 → 服务层 → 数据访问层或外部接口”，禁止跨层直接访问。

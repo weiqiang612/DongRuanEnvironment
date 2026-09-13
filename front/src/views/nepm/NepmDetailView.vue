@@ -69,7 +69,7 @@ watch(() => props.feedbackId, () => { void loadDetail() })
             <div><dt>提交时间</dt><dd>{{ formatTime(feedback.submittedAt) }}</dd></div>
             <div><dt>所属区域</dt><dd>{{ feedback.provinceName ?? '-' }} {{ feedback.cityName ?? '' }}</dd></div>
             <div><dt>问题描述</dt><dd class="description">{{ feedback.information }}</dd></div>
-            <div><dt>预估AQI等级</dt><dd>{{ estimatedGrade }}</dd></div>
+            <div><dt>预估AQI等级</dt><dd><span :class="['aqi-pill', 'aqi-grade-' + (feedback.estimatedGrade ?? 1)]">{{ estimatedGrade }}</span></dd></div>
             <div><dt>当前状态</dt><dd><span :class="['state-pill', `state-pill--${status}`]">{{ status }}</span></dd></div>
             <div><dt>当前处理人</dt><dd>{{ feedback.gmName ?? '-' }}</dd></div>
           </dl>

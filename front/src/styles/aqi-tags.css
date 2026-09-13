@@ -1,0 +1,137 @@
+/* =========================================================
+   全局统一 AQI 6级标准业务语义配色库
+   对照“我要反馈”界面配色标准，全系统统一复用
+   ========================================================= */
+
+:root {
+  /* 1级 优 */
+  --aqi-grade-1-bg: #d1f2d9;
+  --aqi-grade-1-color: #1b6a3e;
+  --aqi-grade-1-border: rgba(27, 106, 62, 0.22);
+
+  /* 2级 良 */
+  --aqi-grade-2-bg: #c4ebd0;
+  --aqi-grade-2-color: #1b6a3e;
+  --aqi-grade-2-border: rgba(27, 106, 62, 0.22);
+
+  /* 3级 轻度污染 */
+  --aqi-grade-3-bg: #fbe9b6;
+  --aqi-grade-3-color: #7d5514;
+  --aqi-grade-3-border: rgba(125, 85, 20, 0.22);
+
+  /* 4级 中度污染 */
+  --aqi-grade-4-bg: #fcd9b8;
+  --aqi-grade-4-color: #914216;
+  --aqi-grade-4-border: rgba(145, 66, 22, 0.22);
+
+  /* 5级 重度污染 */
+  --aqi-grade-5-bg: #fad0d0;
+  --aqi-grade-5-color: #962828;
+  --aqi-grade-5-border: rgba(150, 40, 40, 0.22);
+
+  /* 6级 严重污染 */
+  --aqi-grade-6-bg: #e3d5f8;
+  --aqi-grade-6-color: #59258a;
+  --aqi-grade-6-border: rgba(89, 37, 138, 0.22);
+}
+
+/* 基础通用 AQI 胶囊 */
+.aqi-pill,
+.aqi-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* 按等级数字 class: aqi-grade-1 ~ aqi-grade-6 */
+.aqi-grade-1,
+.grade-1 {
+  background-color: var(--aqi-grade-1-bg) !important;
+  color: var(--aqi-grade-1-color) !important;
+  border: 1px solid var(--aqi-grade-1-border) !important;
+}
+
+.aqi-grade-2,
+.grade-2 {
+  background-color: var(--aqi-grade-2-bg) !important;
+  color: var(--aqi-grade-2-color) !important;
+  border: 1px solid var(--aqi-grade-2-border) !important;
+}
+
+.aqi-grade-3,
+.grade-3 {
+  background-color: var(--aqi-grade-3-bg) !important;
+  color: var(--aqi-grade-3-color) !important;
+  border: 1px solid var(--aqi-grade-3-border) !important;
+}
+
+.aqi-grade-4,
+.grade-4 {
+  background-color: var(--aqi-grade-4-bg) !important;
+  color: var(--aqi-grade-4-color) !important;
+  border: 1px solid var(--aqi-grade-4-border) !important;
+}
+
+.aqi-grade-5,
+.grade-5 {
+  background-color: var(--aqi-grade-5-bg) !important;
+  color: var(--aqi-grade-5-color) !important;
+  border: 1px solid var(--aqi-grade-5-border) !important;
+}
+
+.aqi-grade-6,
+.grade-6 {
+  background-color: var(--aqi-grade-6-bg) !important;
+  color: var(--aqi-grade-6-color) !important;
+  border: 1px solid var(--aqi-grade-6-border) !important;
+}
+
+/* 兼容语义名 class */
+.aqi-tag--excellent,
+.aqi-pill--excellent {
+  background-color: var(--aqi-grade-1-bg) !important;
+  color: var(--aqi-grade-1-color) !important;
+  border: 1px solid var(--aqi-grade-1-border) !important;
+}
+
+.aqi-tag--good,
+.aqi-pill--good {
+  background-color: var(--aqi-grade-2-bg) !important;
+  color: var(--aqi-grade-2-color) !important;
+  border: 1px solid var(--aqi-grade-2-border) !important;
+}
+
+.aqi-tag--light,
+.aqi-pill--light {
+  background-color: var(--aqi-grade-3-bg) !important;
+  color: var(--aqi-grade-3-color) !important;
+  border: 1px solid var(--aqi-grade-3-border) !important;
+}
+
+.aqi-tag--medium,
+.aqi-pill--medium {
+  background-color: var(--aqi-grade-4-bg) !important;
+  color: var(--aqi-grade-4-color) !important;
+  border: 1px solid var(--aqi-grade-4-border) !important;
+}
+
+.aqi-tag--heavy,
+.aqi-pill--heavy {
+  background-color: var(--aqi-grade-5-bg) !important;
+  color: var(--aqi-grade-5-color) !important;
+  border: 1px solid var(--aqi-grade-5-border) !important;
+}
+
+.aqi-tag--severe,
+.aqi-pill--severe {
+  background-color: var(--aqi-grade-6-bg) !important;
+  color: var(--aqi-grade-6-color) !important;
+  border: 1px solid var(--aqi-grade-6-border) !important;
+}

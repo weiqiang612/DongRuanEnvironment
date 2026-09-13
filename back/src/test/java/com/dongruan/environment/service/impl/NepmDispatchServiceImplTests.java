@@ -11,11 +11,13 @@ import com.dongruan.environment.entity.Admin;
 import com.dongruan.environment.entity.AqiFeedback;
 import com.dongruan.environment.entity.GridMember;
 import com.dongruan.environment.entity.TaskAssignLog;
+import com.dongruan.environment.dto.NepmRecentTrendVO;
 import com.dongruan.environment.mapper.AdminMapper;
 import com.dongruan.environment.mapper.AqiFeedbackMapper;
 import com.dongruan.environment.mapper.GridMemberMapper;
 import com.dongruan.environment.mapper.TaskAssignLogMapper;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,6 +90,40 @@ class NepmDispatchServiceImplTests {
     void rejectsOverviewWithInvertedDateRange() {
         assertThrows(IllegalArgumentException.class,
                 () -> service.overview(null, null, LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 1)));
+    }
+
+    @Test
+    void recentTrendUsesRealDailyFlowsAndEndOfDayBacklog() {
+        final LocalDate today = LocalDate.now();
+        when(feedbackMapper.findAll()).thenReturn(List.of(
+                feedbackWithDates(1, today.minusDays(6).atTime(9, 0), null),
+                feedbackWithDates(2, today.minusDays(5).atTime(9, 0), today.minusDays(4).atTime(10, 0)),
+                feedbackWithDates(2, today.atTime(9, 0), today.atTime(15, 0))));
+
+        final NepmRecentTrendVO trend = service.recentTrend();
+
+        assertEquals(List.of(1L, 1L, 0L, 0L, 0L, 0L, 1L), trend.newFeedbacks());
+        assertEquals(List.of(0L, 0L, 1L, 0L, 0L, 0L, 1L), trend.completedFeedbacks());
+        assertEquals(List.of(1L, 2L, 1L, 1L, 1L, 1L, 1L), trend.pendingFeedbacks());
+    }
+
+    @Test
+    void recentTrendKeepsDaysWithoutBusinessFactsAtZero() {
+        when(feedbackMapper.findAll()).thenReturn(List.of());
+
+        final NepmRecentTrendVO trend = service.recentTrend();
+
+        assertEquals(List.of(0L, 0L, 0L, 0L, 0L, 0L, 0L), trend.newFeedbacks());
+        assertEquals(List.of(0L, 0L, 0L, 0L, 0L, 0L, 0L), trend.completedFeedbacks());
+        assertEquals(List.of(0L, 0L, 0L, 0L, 0L, 0L, 0L), trend.pendingFeedbacks());
+    }
+
+    private AqiFeedback feedbackWithDates(final int state, final LocalDateTime submittedAt,
+                                          final LocalDateTime completedAt) {
+        final AqiFeedback feedback = feedback(state, null);
+        feedback.setSubmittedAt(submittedAt);
+        feedback.setCompletedAt(completedAt);
+        return feedback;
     }
 
     private AqiFeedback feedback(final int state, final String memberId) {

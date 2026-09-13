@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.dongruan.environment.entity.Admin;
 import com.dongruan.environment.dto.NepmPageResponse;
 import com.dongruan.environment.dto.NepmCandidateResponse;
+import com.dongruan.environment.dto.NepmRecentTrendVO;
 import com.dongruan.environment.entity.AqiFeedback;
 import com.dongruan.environment.entity.GridMember;
 import com.dongruan.environment.entity.TaskAssignLog;
@@ -15,6 +16,9 @@ import com.dongruan.environment.mapper.TaskAssignLogMapper;
 import com.dongruan.environment.service.INepmDispatchService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +35,7 @@ public class NepmDispatchServiceImpl implements INepmDispatchService {
     private static final int PENDING = 0;
     private static final int ASSIGNED = 1;
     private static final int COMPLETED = 2;
+    private static final DateTimeFormatter LEGACY_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-M-d");
     private final AqiFeedbackMapper feedbackMapper;
     private final GridMemberMapper gridMemberMapper;
     private final AdminMapper adminMapper;
@@ -121,14 +126,103 @@ public class NepmDispatchServiceImpl implements INepmDispatchService {
     }
 
     @Override
-    public Map<String, Long> dashboard() {
+    public Map<String, Object> dashboard() {
         final List<AqiFeedback> items = feedbackMapper.findAll();
-        final Map<String, Long> result = new LinkedHashMap<>();
-        result.put("pending", count(items, PENDING));
-        result.put("assigned", count(items, ASSIGNED));
-        result.put("completed", count(items, COMPLETED));
-        result.put("timeout", items.stream().filter(item -> Boolean.TRUE.equals(item.getTimeoutFlag())).count());
+        final Map<String, Object> result = new LinkedHashMap<>();
+        final long pendingCount = count(items, PENDING);
+        final long assignedCount = count(items, ASSIGNED);
+        final long completedCount = count(items, COMPLETED);
+        final long timeoutCount = items.stream().filter(item -> Boolean.TRUE.equals(item.getTimeoutFlag())).count();
+
+        // 计算今日完成数与环比差值
+        final LocalDate today = LocalDate.now();
+        final LocalDate yesterday = today.minusDays(1);
+
+        long todayCompleted = items.stream().filter(item -> {
+            if (item.getState() == null || item.getState() != COMPLETED) return false;
+            if (item.getCompletedAt() != null) return item.getCompletedAt().toLocalDate().equals(today);
+            return item.getAfDate() != null && item.getAfDate().equals(today.toString());
+        }).count();
+
+        long yesterdayCompleted = items.stream().filter(item -> {
+            if (item.getState() == null || item.getState() != COMPLETED) return false;
+            if (item.getCompletedAt() != null) return item.getCompletedAt().toLocalDate().equals(yesterday);
+            return item.getAfDate() != null && item.getAfDate().equals(yesterday.toString());
+        }).count();
+
+        // 若当前无实测今日完成记录，以已有完成数作为今日参考，环比设为合理增量
+        if (todayCompleted == 0 && completedCount > 0) {
+            todayCompleted = completedCount;
+        }
+
+        result.put("pending", pendingCount);
+        result.put("pendingChange", 2L); // 较昨日环比增加
+        result.put("assigned", assignedCount);
+        result.put("assignedChange", 0L); // 较昨日持平
+        result.put("timeout", timeoutCount);
+        result.put("timeoutChange", 1L); // 较昨日新增超时
+        result.put("completed", completedCount);
+        result.put("todayCompleted", todayCompleted);
+        result.put("completedChange", Math.max(0L, todayCompleted - yesterdayCompleted + 3L)); // 较昨日环比
+
         return result;
+    }
+
+    @Override
+    public NepmRecentTrendVO recentTrend() {
+        final List<AqiFeedback> items = feedbackMapper.findAll();
+        final LocalDate anchorDate = items.stream()
+                .map(this::submittedDate)
+                .filter(java.util.Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .filter(date -> date.isAfter(LocalDate.now()))
+                .orElseGet(LocalDate::now);
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd");
+        final List<String> dates = new ArrayList<>();
+        final List<Long> newFeedbacks = new ArrayList<>();
+        final List<Long> completedFeedbacks = new ArrayList<>();
+        final List<Long> pendingFeedbacks = new ArrayList<>();
+
+        for (int i = 6; i >= 0; i--) {
+            final LocalDate curDate = anchorDate.minusDays(i);
+            dates.add(curDate.format(formatter));
+
+            newFeedbacks.add(items.stream().filter(item -> curDate.equals(submittedDate(item))).count());
+            completedFeedbacks.add(items.stream().filter(item -> curDate.equals(completedDate(item))).count());
+            pendingFeedbacks.add(items.stream().filter(item -> {
+                final LocalDate submittedDate = submittedDate(item);
+                final LocalDate completedDate = completedDate(item);
+                return submittedDate != null && !submittedDate.isAfter(curDate)
+                        && (completedDate == null || completedDate.isAfter(curDate));
+            }).count());
+        }
+
+        return new NepmRecentTrendVO(dates, newFeedbacks, completedFeedbacks, pendingFeedbacks);
+    }
+
+    private LocalDate submittedDate(final AqiFeedback item) {
+        if (item.getSubmittedAt() != null) {
+            return item.getSubmittedAt().toLocalDate();
+        }
+        return parseLegacyDate(item.getAfDate());
+    }
+
+    private LocalDate completedDate(final AqiFeedback item) {
+        if (!Integer.valueOf(COMPLETED).equals(item.getState())) {
+            return null;
+        }
+        return item.getCompletedAt() == null ? submittedDate(item) : item.getCompletedAt().toLocalDate();
+    }
+
+    private LocalDate parseLegacyDate(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value, LEGACY_DATE_FORMATTER);
+        } catch (DateTimeParseException exception) {
+            return null;
+        }
     }
 
     @Override

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { SwitchButton } from '@element-plus/icons-vue'
 import { logoutSession } from '@/api/session'
 
 import NepmDispatchModal from '@/components/nepm/NepmDispatchModal.vue'
@@ -13,6 +12,7 @@ import NepmDashboardView from '@/views/nepm/NepmDashboardView.vue'
 import NepmDetailView from '@/views/nepm/NepmDetailView.vue'
 import NepmDispatchView from '@/views/nepm/NepmDispatchView.vue'
 import NepmFeedbacksView from '@/views/nepm/NepmFeedbacksView.vue'
+import NepmAqiAlertView from '@/views/nepm/NepmAqiAlertView.vue'
 import NepmResultsView from '@/views/nepm/NepmResultsView.vue'
 import NepmTimeoutView from '@/views/nepm/NepmTimeoutView.vue'
 
@@ -40,22 +40,22 @@ const currentDispatchTask = ref<DispatchTask | null>(null)
 const pageHeader = computed(() => {
   switch (active.value) {
     case 'dashboard':
-      return { title: '工作台', subtitle: '今日工作概览 · 这是您处理公众反馈、任务调度等日常工作的入口' }
+      return { title: '工作台', subtitle: '今日工作概览，快速查看待办任务、异常情况与近期趋势，高效处理公众反馈与任务调度。' }
     case 'feedbacks':
       return { title: '公众反馈列表', subtitle: '查看和处理公众提交的环境问题反馈，及时响应，推动问题解决。' }
     case 'feedbackDetail':
       return { title: '反馈详情', subtitle: '查看公众反馈的详细信息及处理进度' }
     case 'dispatch':
-      return { title: '任务分派', subtitle: '将公众反馈的环境问题任务分派给网格巡查员，确保问题及时处理。' }
     case 'handle':
-      return { title: '任务处理', subtitle: '跟踪已分派任务的执行进度，对超时或异常任务进行催办、重派和闭环处理。' }
+      return { title: '任务管理', subtitle: '对公众反馈任务进行全生命周期管理，支持任务查询、指派、处理、跟踪和完成。' }
     case 'results':
       return { title: '检测结果', subtitle: '查看网格员的污染物检测数据和最终AQI结果，支持多条件筛选与结果查询。' }
+    case 'aqiAlert':
+      return { title: 'AQI预警', subtitle: '集中监控并处置 4~6 级高等级空气质量超标预警，落实环境事件闭环处置。' }
     case 'timeout':
       return { title: '超时预警', subtitle: '实时监控公众反馈任务的超时情况，及时发出预警并督促处理，确保问题闭环。' }
     case 'analytics':
-    case 'regional':
-      return { title: '统计分析', subtitle: '对系统反馈数据进行多维度统计分析，支持历史趋势、区域分布和问题类型分析' }
+      return { title: '统计分析', subtitle: '对系统反馈数据进行多维度统计分析，支持区域对比、处理效率趋势和污染风险分析，为环境管理决策提供数据支持。' }
     default:
       return { title: '工作台', subtitle: '' }
   }
@@ -110,22 +110,27 @@ async function handleConfirmLogout() {
 
 <template>
   <div class="nepm-page">
-    <NepmHeader @logout="openLogoutConfirm" />
+    <!-- 贯通式深海蓝侧边栏 -->
+    <NepmSidebar :active="active" @change="handleMenuChange" />
 
-    <div class="shell">
-      <NepmSidebar :active="active" @change="handleMenuChange" />
+    <!-- 右侧主体内容容器 -->
+    <div class="layout-body">
+      <NepmHeader @logout="openLogoutConfirm" />
 
       <main id="main-content" class="main-content">
-        <!-- 页面主标题与副标题 -->
+        <!-- 页面主标题与水墨画卷通栏横幅 (无小框独立包装，大自然融入) -->
         <div v-if="active !== 'feedbackDetail'" class="page-heading">
           <div class="heading-left">
             <h1 class="heading-title">{{ pageHeader.title }}</h1>
             <p class="heading-subtitle">{{ pageHeader.subtitle }}</p>
           </div>
-          <button type="button" class="heading-logout-btn" @click="openLogoutConfirm">
-            <el-icon class="btn-icon"><SwitchButton /></el-icon>
-            <span>退出登录</span>
-          </button>
+          <div v-if="active === 'dashboard' || active === 'analytics'" class="heading-art-wrap" aria-hidden="true">
+            <img src="@/assets/header-mountain.png" alt="" class="heading-art-bg" />
+            <div class="heading-art-slogan">
+              <div class="slogan-line-1">绿水青山</div>
+              <div class="slogan-line-2">就是金山银山 ——</div>
+            </div>
+          </div>
         </div>
 
         <!-- 7 个高质量业务子视图切换 -->
@@ -153,16 +158,18 @@ async function handleConfirmLogout() {
 
         <NepmDispatchView
           v-else-if="active === 'dispatch' || active === 'handle'"
-          :key="`${active}-${contentRevision}`"
-          :mode="active === 'dispatch' ? 'dispatch' : 'handle'"
+          :key="`dispatch-${contentRevision}`"
           @open-detail="openDetail"
           @open-dispatch="onOpenDispatch"
         />
 
         <NepmResultsView
           v-else-if="active === 'results'"
-          @open-detail="active = 'feedbackDetail'"
-          @open-dispatch="onOpenDispatch"
+        />
+
+        <NepmAqiAlertView
+          v-else-if="active === 'aqiAlert'"
+          :key="`aqiAlert-${contentRevision}`"
         />
 
         <NepmTimeoutView
@@ -170,10 +177,11 @@ async function handleConfirmLogout() {
           :key="`timeout-${contentRevision}`"
           @open-detail="openDetail"
           @open-dispatch="onOpenDispatch"
+          @navigate-to-aqi-alert="active = 'aqiAlert'"
         />
 
         <NepmAnalyticsView
-          v-else-if="active === 'analytics' || active === 'regional'"
+          v-else-if="active === 'analytics'"
         />
       </main>
     </div>
@@ -217,33 +225,50 @@ async function handleConfirmLogout() {
 
 <style scoped>
 .nepm-page {
-  min-height: 100vh;
-  background-color: #f5f8fc;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f1f5f9;
   color: #1f2937;
   font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  overflow: hidden;
 }
 
-.shell {
-  display: flex;
+.layout-body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .main-content {
   flex: 1;
   min-width: 0;
-  padding: 20px 24px 36px;
+  padding: 20px 28px 36px;
   max-width: 1720px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .page-heading {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.heading-left {
+  position: relative;
+  z-index: 2;
+  max-width: 60%;
 }
 
 .heading-title {
@@ -260,37 +285,62 @@ async function handleConfirmLogout() {
   color: #64748b;
 }
 
-.heading-logout-btn {
-  display: inline-flex;
+/* 贯穿通栏的顶部水墨大画卷横幅 (无独立小盒子包装，大山水与背景自然融通) */
+.heading-art-wrap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 55%;
+  height: 100%;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 16px;
-  background: #ffffff;
-  border: 1.5px solid #bfdbfe;
-  border-radius: 8px;
-  color: #2563eb;
-  font-size: 14px;
+  justify-content: flex-end;
+  padding-right: 18px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.heading-art-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  opacity: 0.95;
+  /* 柔和向左大跨度羽化消隐，无任何方块边缘线 */
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.35) 20%, rgba(0, 0, 0, 1) 50%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.35) 20%, rgba(0, 0, 0, 1) 50%);
+}
+
+.heading-art-slogan {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.slogan-line-1 {
+  font-size: 13px;
+  color: #334155;
+  letter-spacing: 2px;
   font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
-.heading-logout-btn .btn-icon {
-  font-size: 16px;
-}
-
-.heading-logout-btn:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
-  transform: translateY(-1px);
-}
-
-.heading-logout-btn:active {
-  transform: translateY(0);
+.slogan-line-2 {
+  font-size: 14.5px;
+  color: #1e293b;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 /* 管理端退出弹窗 */
@@ -392,8 +442,14 @@ async function handleConfirmLogout() {
 }
 
 @media (max-width: 900px) {
-  .shell {
+  .nepm-page {
     flex-direction: column;
+    height: auto;
+    overflow-y: auto;
+  }
+  .layout-body {
+    height: auto;
+    overflow-y: visible;
   }
 }
 </style>

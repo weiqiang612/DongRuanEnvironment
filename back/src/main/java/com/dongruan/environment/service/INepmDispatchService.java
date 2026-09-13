@@ -2,6 +2,7 @@ package com.dongruan.environment.service;
 
 import com.dongruan.environment.dto.NepmPageResponse;
 import com.dongruan.environment.dto.NepmCandidateResponse;
+import com.dongruan.environment.dto.NepmRecentTrendVO;
 import com.dongruan.environment.entity.AqiFeedback;
 import com.dongruan.environment.entity.GridMember;
 import com.dongruan.environment.entity.TaskAssignLog;
@@ -19,6 +20,7 @@ public interface INepmDispatchService {
     List<NepmCandidateResponse> findCandidates(Integer feedbackId);
     List<TaskAssignLog> findLogs(Integer feedbackId);
     AqiFeedback dispatch(Integer feedbackId, String gridMemberId, String accountCode);
-    Map<String, Long> dashboard();
+    Map<String, Object> dashboard();
     Map<String, Long> overview(Integer provinceId, Integer cityId, LocalDate submittedFrom, LocalDate submittedTo);
+    NepmRecentTrendVO recentTrend();
 }
