@@ -77,8 +77,7 @@ const router = createRouter({
     {
       path: '/nepv/portal',
       name: 'nepvPortal',
-      component: () => import('../views/EmployeePortal.vue'),
-      props: { portal: 'nepv' },
+      component: () => import('../views/nepv/NepvDashboardView.vue'),
       meta: { requiredRole: 'NEPV_DECISION_MAKER' },
     },
     {

@@ -4,9 +4,12 @@
 
 ## Active feature
 
-`docs/4-tasks/features/TASK-010-nepv-decision/` (待规划)
+暂无进行中的功能任务。
 
 ## Stages
+
+### TASK-010: NEPV 决策端中国地图与综合分析大屏
+- [x] Implementation（16/16；用户手工 Chrome 验收通过）
 
 ### TASK-009: NEPM 管理者端检测处置与运营统计
 - [x] Implementation (20 tasks 全部完成，验证通过)
@@ -62,4 +65,4 @@
      - 第四层：彻底剔除伪静态假话术，底部升级为双列结构化统计口径说明卡片（数据范围 + 用途说明）；
      - 留白呼吸感：卡片统一 12px 圆角、`#E6ECF5` 边框，模块间统一 20~24px 充裕留白；
   4. 设计文档同步：`docs/2-designs/api_contract.md`、`docs/2-designs/ui_prototype.md` 均已更新同步。
-- 下一阶段为 TASK-010（NEPV 决策端大屏可视化与综合分析），将基于 TASK-008 与 TASK-009 沉淀的真实数据资产构建决策驾驶舱。
+- 2026-09-14 TASK-010 已完成：NEPV 决策端提供只读实时聚合、省级地图下钻市级地图、城市筛选联动、覆盖率、AQI 分布、月度趋势、预警和城市数据表；市级地图资源按省份点击后加载。后端 72 项测试、前端构建/Lint 通过；用户手工 Chrome 在桌面及 375×812 窄屏验收通过，修复 ECharts 窄屏 resize 竞争后确认无项目 JavaScript 错误。下一阶段待立项。

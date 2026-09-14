@@ -195,9 +195,25 @@
    - 超时任务调度与重派继续复用 `GET /nepm/timeout-alerts` 与 `POST /nepm/feedbacks/{afId}/dispatch` 接口。
    - 超时任务重新指派后，调度引擎自动完成网格员切换与 `task_assign_log` 的 `REASSIGN` 动作记录，保持调度核心逻辑复用与单一职责。
 
+### NEPV 决策大屏（TASK-010）
+
+`GET /nepv/dashboard` 要求员工 Session 同时具备 `employeeRole = NEPV_DECISION_MAKER` 与非空 `employeeAccountCode`。无 Session 返回 HTTP 401、`code: 401`、`message: "请先登录"`；角色不符返回 HTTP 403、`code: 403`、`message: "无决策端权限"`；所有响应保持 `ResultVO` 外层。
+
+可选查询参数为 `provinceId`、`cityId`、`submittedFrom`、`submittedTo`（日期格式 `yyyy-MM-dd`）。起止日期倒置返回 HTTP 400。成功 `data` 为只读聚合对象：
+
+- `totalDetections`、`highPollutionDetections`、`totalAlerts`、`pendingAlerts`：当前筛选范围内的真实检测与预警计数；
+- `gridCoverage`：`totalCities`、`coveredCities`、`coverageRate`，覆盖率为至少有一名网格员的城市数除以城市总数；分母为零时为 `0`；
+- `aqiDistribution`：AQI 1~6 级的真实计数；`monthlyTrends`：按反馈提交月聚合的检测量与预警量；
+- `provinceRisks`：省编号、名称、检测量、高等级污染量、待处置预警量，供中国省级地图着色和悬停；
+- `cityRisks`：选择省份时返回；若继续筛选具体城市则仅返回该城市。每项包含城市编号、名称、检测量、高等级污染量、待处置预警量和主导 AQI 等级，供该省市级地图及底部城市数据表使用。主导等级的出现次数并列时取较高等级，突出风险；
+- `recentAlerts`：最多五条最新只读预警摘要，不提供处置或写入字段。
+
+无业务数据时计数为 `0`、列表为 `[]`，不得返回示例地图或预警数据。省份名称/adcode 映射只在前端展示层完成，映射失败时不伪造地图数据。
+
 ## 目标契约原则
 
-需求文档定义的 NEPV 决策大屏与 HR 外部接口尚未实现，以下是后续设计必须遵守的契约边界，而不是可调用的当前 API：
+HR 外部接口及以下其余目标接口尚未实现，以下是后续设计必须遵守的契约边界，而不是可调用的当前 API：
+
 
 | 目标接口 | 调用方 | 责任与约束 |
 |---|---|---|

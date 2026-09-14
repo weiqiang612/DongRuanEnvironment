@@ -46,4 +46,8 @@ TASK-009 的 NEPM 检测处置与运营统计层构建在 TASK-007 与 TASK-008 
 
 ## 当前接口边界
 
+### TASK-010 NEPV 决策链路
+
+`GET /nepv/dashboard` 由 Controller 校验 `NEPV_DECISION_MAKER` Session，服务层只读检测结果、预警和地区/网格员覆盖事实，并按筛选范围实时计算省级指标、AQI 分布、月度趋势、覆盖率和最新预警；当已选择省份且未选择具体城市时，还实时返回该省的城市风险聚合。前端将 DataV GeoAtlas 产出的中国省级及省内市级 GeoJSON 作为本地资源注册至 ECharts，市级资源仅在进入该省时按需加载；项目内部省份名称通过静态映射匹配地图 adcode，匹配失败不渲染虚构地区数据，仍保留列表统计和空状态。
+
 前端请求路径必须带 `/api`，后端控制器不带该前缀。后端监听 `8080`；Swagger UI 为 `/swagger-ui.html`，OpenAPI 文档为 `/api-docs`。目标接口的认证、传输和状态规则见 `api_contract.md`，尚未实现的模块不可据此直接调用。
